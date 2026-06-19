@@ -12,10 +12,11 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true,
-      load: [databaseConfig, jwtConfig],
-      envFilePath: ['.env', '.env.local'],
-    }),
+  isGlobal: true,
+  load: [databaseConfig, jwtConfig],
+  // Use the exact, hardcoded path for your machine
+  envFilePath: 'C:/Users/adhik/TREKEASY-FINAL/.env', 
+}),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

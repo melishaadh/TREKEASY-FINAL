@@ -10,7 +10,6 @@ import {
   Platform,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { X, User } from 'lucide-react-native';
 import { X, User, ShieldCheck } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { C } from '@/constants/theme';

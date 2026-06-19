@@ -1,4 +1,6 @@
 import { NestFactory } from '@nestjs/core';
+// Force load the .env file from the root folder
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as cors from 'cors';
@@ -6,30 +8,28 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
-  // Enable CORS for frontend
+console.log("Checking MONGODB_URI:", process.env.MONGODB_URI);
   app.use(cors({
-    origin: ['http://localhost:8081', 'http://localhost:3000', 'http://localhost:19006'],
+    origin: '*', 
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   }));
 
-  // Global validation pipe
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     transform: true,
     forbidNonWhitelisted: true,
   }));
 
-  // API prefix
   app.setGlobalPrefix('api');
 
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT') || 3001;
 
-  await app.listen(port);
-  console.log(`TrekEasy Backend running on: http://localhost:${port}/api`);
-}
+  // Listen on all network interfaces
+  await app.listen(port, '0.0.0.0');
+  console.log(`TrekEasy Backend running on: http://0.0.0.0:${port}/api`);
+} // <--- THIS BRACE IS REQUIRED
 
-bootstrap();
+bootstrap(); // <--- THIS IS OUTSIDE THE FUNCTION

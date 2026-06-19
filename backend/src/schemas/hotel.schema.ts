@@ -24,10 +24,10 @@ export class Hotel extends Document {
   @Prop({ required: true, default: 10 })
   capacity!: number;
 
-  @Prop({ trim: true, default: null })
+ @Prop({ type: String, trim: true, default: null })
   description!: string | null;
 
-  @Prop({ trim: true, default: null })
+  @Prop({ type: String, trim: true, default: null })
   image_url!: string | null;
 
   @Prop({ default: true })
