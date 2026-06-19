@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { X, User } from 'lucide-react-native';
+import { X, User, ShieldCheck } from 'lucide-react-native';
+import { router } from 'expo-router';
 import { C } from '@/constants/theme';
 
 interface DrawerMenuProps {
@@ -52,6 +54,14 @@ export default function DrawerMenu({ visible, onClose }: DrawerMenuProps) {
               </View>
               <Text style={s.menuText}>Profile</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+  style={[s.menuItem, { marginTop: 10, borderColor: 'rgba(59,130,246,0.25)', backgroundColor: 'rgba(59,130,246,0.08)' }]}
+  onPress={() => { onClose(); router.push('/admin/login'); }}>
+  <View style={[s.iconWrap, { backgroundColor: 'rgba(59,130,246,0.18)' }]}>
+    <ShieldCheck size={20} color="#3b82f6" strokeWidth={2} />
+  </View>
+  <Text style={[s.menuText, { color: '#3b82f6' }]}>Admin Panel</Text>
+</TouchableOpacity>
           </View>
         </View>
       </View>
