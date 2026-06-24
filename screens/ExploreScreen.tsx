@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   ScrollView,
   StatusBar,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { Search, SlidersHorizontal } from 'lucide-react-native';
 import { router } from 'expo-router';
@@ -17,6 +18,7 @@ import TrekCard from '@/components/TrekCard';
 import FilterModal, { FilterState } from '@/components/FilterModal';
 import LoginPromptModal from '@/components/LoginPromptModal';
 import { DESTINATIONS } from '@/data/destinations';
+import { treksApi, Trek } from '@/services/apiService';
 import { useAuth } from '@/context/AuthContext';
 import { C } from '@/constants/theme';
 
@@ -26,7 +28,27 @@ const DEFAULT_FILTERS: FilterState = {
   maxPrice: 300000,
 };
 
-const TRENDING = [...DESTINATIONS].sort((a, b) => b.likes - a.likes).slice(0, 3);
+function mapTrek(t: Trek): typeof DESTINATIONS[0] {
+  return {
+    id: t.id,
+    parentName: t.region,
+    childRoute: '',
+    displayTitle: t.name,
+    keywords: t.keywords,
+    difficulty: t.difficulty as 'Easy' | 'Moderate' | 'Hard',
+    maxAltitude: t.maxAltitude,
+    durationDays: t.duration,
+    priceNPR: t.price,
+    description: t.description,
+    image: t.imageUrl ?? '',
+    likes: 0,
+    itinerary: t.routeStages.map(s => ({
+      day: s.day,
+      title: `${s.from} → ${s.to}`,
+      description: `Distance: ${s.distance}km | Elevation: ${s.elevationGain}m | Time: ${s.estimatedHours}hrs`,
+    })),
+  };
+}
 
 export default function ExploreScreen() {
   const { isLoggedIn } = useAuth();
@@ -37,6 +59,25 @@ export default function ExploreScreen() {
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [liked, setLiked] = useState<Set<string>>(new Set());
+  const [treks, setTreks] = useState<typeof DESTINATIONS>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await treksApi.getAll();
+        if (data.length > 0) {
+          setTreks(data.map(mapTrek));
+        } else {
+          setTreks(DESTINATIONS);
+        }
+      } catch {
+        setTreks(DESTINATIONS);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   const handleLike = useCallback(
     (id: string) => {
@@ -54,9 +95,14 @@ export default function ExploreScreen() {
     [isLoggedIn]
   );
 
+  const TRENDING = useMemo(
+    () => [...treks].sort((a, b) => b.likes - a.likes).slice(0, 3),
+    [treks]
+  );
+
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return DESTINATIONS.filter(t => {
+    return treks.filter(t => {
       const matchSearch =
         !q ||
         t.displayTitle.toLowerCase().includes(q) ||
@@ -67,7 +113,7 @@ export default function ExploreScreen() {
       const matchPrice = t.priceNPR <= filters.maxPrice;
       return matchSearch && matchDiff && matchDur && matchPrice;
     });
-  }, [search, filters]);
+  }, [search, filters, treks]);
 
   const isFiltered =
     filters.difficulty !== DEFAULT_FILTERS.difficulty ||
@@ -105,6 +151,11 @@ export default function ExploreScreen() {
         </TouchableOpacity>
       </View>
 
+      {loading ? (
+        <View style={s.loadingWrap}>
+          <ActivityIndicator size="large" color={C.brand} />
+        </View>
+      ) : (
       <FlatList
         data={filtered}
         keyExtractor={item => item.id}
@@ -157,6 +208,7 @@ export default function ExploreScreen() {
           </View>
         }
       />
+      )}
 
       <DrawerMenu visible={drawerOpen} onClose={() => setDrawerOpen(false)} />
       <FilterModal
@@ -238,4 +290,10 @@ const s = StyleSheet.create({
     borderRadius: 12,
   },
   clearBtnText: { color: C.white, fontWeight: '600' },
+  loadingWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+  },
 });

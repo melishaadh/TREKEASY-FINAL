@@ -4,13 +4,12 @@ import {
   ScrollView, StyleSheet, ActivityIndicator,
 } from 'react-native';
 import { X, ChevronDown } from 'lucide-react-native';
-import { Hotel, HotelInput } from '@/services/apiService';
+import { Hotel, HotelInput, treksApi, Trek } from '@/services/apiService';
 import { AT } from '@/context/AdminThemeContext';
-import { DESTINATIONS } from '@/data/destinations';
 
 interface Props {
   visible: boolean;
-  hotel: Hotel | null; // null = create mode
+  hotel: Hotel | null;
   onClose: () => void;
   onSave: (data: HotelInput) => Promise<void>;
   theme: AT;
@@ -34,6 +33,8 @@ export default function HotelModal({ visible, hotel, onClose, onSave, theme: t }
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [destOpen, setDestOpen] = useState(false);
+  const [destinations, setDestinations] = useState<Trek[]>([]);
+  const [loadingDests, setLoadingDests] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -50,6 +51,12 @@ export default function HotelModal({ visible, hotel, onClose, onSave, theme: t }
         is_active: hotel.is_active,
       } : EMPTY);
       setError(null);
+      (async () => {
+        setLoadingDests(true);
+        const data = await treksApi.getAll();
+        setDestinations(data);
+        setLoadingDests(false);
+      })();
     }
   }, [visible, hotel]);
 
@@ -80,7 +87,6 @@ export default function HotelModal({ visible, hotel, onClose, onSave, theme: t }
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={s.overlay}>
         <View style={[s.sheet, { backgroundColor: t.surface, borderColor: t.border }]}>
-          {/* Header */}
           <View style={[s.header, { borderBottomColor: t.border }]}>
             <Text style={[s.title, { color: t.text }]}>
               {hotel ? 'Edit Hotel' : 'Add New Hotel'}
@@ -97,7 +103,6 @@ export default function HotelModal({ visible, hotel, onClose, onSave, theme: t }
               </View>
             )}
 
-            {/* Row 1: Hotel Name + Location */}
             <View style={s.row}>
               <View style={s.field}>
                 <Text style={[s.label, { color: t.textSub }]}>Hotel Name *</Text>
@@ -121,31 +126,32 @@ export default function HotelModal({ visible, hotel, onClose, onSave, theme: t }
               </View>
             </View>
 
-            {/* Trek Destination dropdown */}
             <View style={s.fieldFull}>
               <Text style={[s.label, { color: t.textSub }]}>Trek Destination *</Text>
               <TouchableOpacity
                 style={[inputStyle, s.dropdownBtn]}
                 onPress={() => setDestOpen(p => !p)}>
                 <Text style={{ color: form.trek_destination_id ? t.text : t.textFaint, flex: 1, fontSize: 13 }}>
-                  {form.trek_destination_name || 'Select a destination...'}
+                  {loadingDests
+                    ? 'Loading...'
+                    : form.trek_destination_name || 'Select a destination...'}
                 </Text>
                 <ChevronDown size={16} color={t.textFaint} strokeWidth={2} />
               </TouchableOpacity>
               {destOpen && (
                 <View style={[s.dropdown, { backgroundColor: t.surface, borderColor: t.border }]}>
                   <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled>
-                    {DESTINATIONS.map(d => (
+                    {destinations.map(d => (
                       <TouchableOpacity
                         key={d.id}
                         style={[s.dropItem, { borderBottomColor: t.border }]}
                         onPress={() => {
                           set('trek_destination_id', d.id);
-                          set('trek_destination_name', d.displayTitle);
+                          set('trek_destination_name', d.name);
                           setDestOpen(false);
                         }}>
-                        <Text style={{ color: t.text, fontSize: 13 }}>{d.displayTitle}</Text>
-                        <Text style={{ color: t.textFaint, fontSize: 11 }}>{d.parentName}</Text>
+                        <Text style={{ color: t.text, fontSize: 13 }}>{d.name}</Text>
+                        <Text style={{ color: t.textFaint, fontSize: 11 }}>{d.region}</Text>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -153,7 +159,6 @@ export default function HotelModal({ visible, hotel, onClose, onSave, theme: t }
               )}
             </View>
 
-            {/* Row 2: Owner Contact + Price */}
             <View style={s.row}>
               <View style={s.field}>
                 <Text style={[s.label, { color: t.textSub }]}>Owner Contact *</Text>
@@ -178,7 +183,6 @@ export default function HotelModal({ visible, hotel, onClose, onSave, theme: t }
               </View>
             </View>
 
-            {/* Row 3: Capacity + Image URL */}
             <View style={s.row}>
               <View style={s.field}>
                 <Text style={[s.label, { color: t.textSub }]}>Capacity (guests)</Text>
@@ -202,7 +206,6 @@ export default function HotelModal({ visible, hotel, onClose, onSave, theme: t }
               </View>
             </View>
 
-            {/* Description */}
             <View style={s.fieldFull}>
               <Text style={[s.label, { color: t.textSub }]}>Short Description</Text>
               <TextInput
@@ -216,7 +219,6 @@ export default function HotelModal({ visible, hotel, onClose, onSave, theme: t }
             </View>
           </ScrollView>
 
-          {/* Footer */}
           <View style={[s.footer, { borderTopColor: t.border }]}>
             <TouchableOpacity
               style={[s.cancelBtn, { borderColor: t.border, backgroundColor: t.surfaceElevated }]}

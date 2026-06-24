@@ -572,6 +572,55 @@ export const groupsApi = {
   },
 };
 
+// ─── Treks API ─────────────────────────────────────────────────────────────────
+
+export interface RouteStage {
+  day: number;
+  from: string;
+  to: string;
+  distance: number;
+  elevationGain: number;
+  estimatedHours: number;
+  checkpoint: string;
+  restStop: string;
+}
+
+export interface Trek {
+  id: string;
+  name: string;
+  description: string;
+  region: string;
+  difficulty: string;
+  duration: number;
+  price: number;
+  maxAltitude: number;
+  imageUrl: string | null;
+  keywords: string[];
+  routeStages: RouteStage[];
+}
+
+export const treksApi = {
+  getAll: async (): Promise<Trek[]> => {
+    try {
+      const res = await fetch(`${API_URL}/treks`);
+      return await res.json();
+    } catch {
+      return [];
+    }
+  },
+
+  getById: async (id: string): Promise<Trek | null> => {
+    try {
+      const res = await fetch(`${API_URL}/treks/${id}`);
+      const data = await res.json();
+      if (data.error) return null;
+      return data as Trek;
+    } catch {
+      return null;
+    }
+  },
+};
+
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────
 
 export const dashboardApi = {

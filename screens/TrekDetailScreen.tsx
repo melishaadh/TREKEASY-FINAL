@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,24 +9,74 @@ import {
   StyleSheet,
   Dimensions,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { ArrowLeft, Heart, Mountain, Clock, Users, TrendingUp } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import LoginPromptModal from '@/components/LoginPromptModal';
 import { DESTINATIONS } from '@/data/destinations';
+import { treksApi, Trek } from '@/services/apiService';
 import { useAuth } from '@/context/AuthContext';
 import { C, DIFFICULTY_COLOR } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
 
+function mapDetailTrek(t: Trek) {
+  return {
+    id: t.id,
+    displayTitle: t.name,
+    parentName: t.region,
+    difficulty: t.difficulty,
+    durationDays: t.duration,
+    maxAltitude: t.maxAltitude,
+    priceNPR: t.price,
+    description: t.description,
+    image: t.imageUrl ?? '',
+    likes: 0,
+    itinerary: t.routeStages.map(s => ({
+      day: s.day,
+      title: `${s.from} → ${s.to}`,
+      description: `Distance: ${s.distance}km | Elevation: ${s.elevationGain}m | Est. Time: ${s.estimatedHours}hrs${s.checkpoint ? ` | Via: ${s.checkpoint}` : ''}`,
+    })),
+  };
+}
+
 export default function TrekDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { isLoggedIn } = useAuth();
-  const trek = DESTINATIONS.find(t => t.id === id);
+  const [trek, setTrek] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [loginPrompt, setLoginPrompt] = useState(false);
   const [loginMessage, setLoginMessage] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await treksApi.getById(id);
+        if (data) {
+          setTrek(mapDetailTrek(data));
+        } else {
+          const fallback = DESTINATIONS.find(t => t.id === id);
+          if (fallback) setTrek(fallback);
+        }
+      } catch {
+        const fallback = DESTINATIONS.find(t => t.id === id);
+        if (fallback) setTrek(fallback);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <View style={[s.root, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={C.brand} />
+      </View>
+    );
+  }
 
   if (!trek) {
     return (
@@ -116,7 +166,7 @@ export default function TrekDetailScreen() {
 
           {/* Itinerary */}
           <Text style={s.heading}>Itinerary — {trek.durationDays} Days</Text>
-          {trek.itinerary.map((day, i) => (
+          {trek.itinerary.map((day: any, i: number) => (
             <View key={day.day} style={s.itRow}>
               <View style={s.itLeft}>
                 <View style={s.itDot}>
