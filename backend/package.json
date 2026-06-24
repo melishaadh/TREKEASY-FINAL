@@ -12,7 +12,8 @@
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "test": "jest",
-    "seed:admin": "ts-node src/seed/admin.seed.ts"
+    "seed:admin": "ts-node src/seed/admin.seed.ts",
+    "seed:treks": "ts-node src/seed/trek.seed.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",

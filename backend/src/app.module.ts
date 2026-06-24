@@ -8,6 +8,8 @@ import { UsersModule } from './modules/users/users.module';
 import { HotelsModule } from './modules/hotels/hotels.module';
 import { GroupsModule } from './modules/groups/groups.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { TreksModule } from './modules/treks/treks.module';
+import { ItineraryModule } from './modules/itinerary/itinerary.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     HotelsModule,
     GroupsModule,
     DashboardModule,
+    TreksModule,
+    ItineraryModule,
   ],
 })
 export class AppModule {}

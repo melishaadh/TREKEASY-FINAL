@@ -20,6 +20,9 @@ export class User extends Document {
       cardioRespiratoryIndicator: { type: Number, required: true, min: 0, max: 1 },
       jointStability: { type: Number, required: true, min: 0, max: 1 },
       altitudeHistory: { type: Number, required: true, min: 0, max: 3 },
+      fitnessLevel: { type: String, enum: ['beginner', 'intermediate', 'advanced', 'expert'], default: 'beginner' },
+      trekkingExperience: { type: String, enum: ['none', 'basic', 'moderate', 'extensive'], default: 'none' },
+      pace: { type: String, enum: ['slow', 'moderate', 'fast'], default: 'moderate' },
     },
     _id: false,
   })
@@ -49,6 +52,12 @@ export interface UserProfile {
   jointStability: number;
   /** Altitude experience history: 0=none, 1=basic, 2=moderate, 3=extensive */
   altitudeHistory: number;
+  /** Fitness level for itinerary personalization */
+  fitnessLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  /** Trekking experience for itinerary personalization */
+  trekkingExperience: 'none' | 'basic' | 'moderate' | 'extensive';
+  /** Preferred pace for itinerary personalization */
+  pace: 'slow' | 'moderate' | 'fast';
 }
 
 // Validation constraints for UserProfile fields

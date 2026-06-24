@@ -1,6 +1,7 @@
-import { NestFactory } from '@nestjs/core';
-// Force load the .env file from the root folder
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as cors from 'cors';
@@ -19,7 +20,6 @@ console.log("Checking MONGODB_URI:", process.env.MONGODB_URI);
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     transform: true,
-    forbidNonWhitelisted: true,
   }));
 
   app.setGlobalPrefix('api');

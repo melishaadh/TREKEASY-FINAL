@@ -1,22 +1,48 @@
 import {
   Controller, Get, Post, Patch, Body, Param, Request, UseGuards, HttpCode, HttpStatus,
 } from '@nestjs/common';
+import { IsEmail, IsString, MinLength, IsOptional, IsInt, Min, Max, IsIn } from 'class-validator';
 import { UsersService } from './users.service';
 import { AuthGuard } from '@nestjs/passport';
 import { UserProfile } from '@/schemas/user.schema';
 
 class CreateUserDto {
+  @IsEmail()
   email: string;
+
+  @IsString()
+  @MinLength(2)
   name: string;
+
+  @IsString()
+  @MinLength(6)
   password: string;
 }
 
 class UpdateProfileDto {
+  @IsInt() @Min(0) @Max(3)
   ageGroup: number;
+
+  @IsInt() @Min(0) @Max(3)
   experienceLevel: number;
+
+  @IsInt() @Min(0) @Max(1)
   cardioRespiratoryIndicator: number;
+
+  @IsInt() @Min(0) @Max(1)
   jointStability: number;
+
+  @IsInt() @Min(0) @Max(3)
   altitudeHistory: number;
+
+  @IsOptional() @IsIn(['beginner', 'intermediate', 'advanced', 'expert'])
+  fitnessLevel?: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+
+  @IsOptional() @IsIn(['none', 'basic', 'moderate', 'extensive'])
+  trekkingExperience?: 'none' | 'basic' | 'moderate' | 'extensive';
+
+  @IsOptional() @IsIn(['slow', 'moderate', 'fast'])
+  pace?: 'slow' | 'moderate' | 'fast';
 }
 
 class LikeTrekDto {
@@ -61,7 +87,16 @@ export class UsersController {
   @Patch('profile')
   @UseGuards(AuthGuard('jwt'))
   async updateProfile(@Request() req: any, @Body() body: UpdateProfileDto) {
-    const profile: UserProfile = body;
+    const profile: UserProfile = {
+      ageGroup: body.ageGroup,
+      experienceLevel: body.experienceLevel,
+      cardioRespiratoryIndicator: body.cardioRespiratoryIndicator,
+      jointStability: body.jointStability,
+      altitudeHistory: body.altitudeHistory,
+      fitnessLevel: body.fitnessLevel ?? 'beginner',
+      trekkingExperience: body.trekkingExperience ?? 'none',
+      pace: body.pace ?? 'moderate',
+    };
     const user = await this.usersService.updateProfile(req.user.userId, profile);
     if (!user) return { error: 'User not found' };
     return { success: true, profile: user.profile };
