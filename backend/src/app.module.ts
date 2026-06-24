@@ -16,8 +16,6 @@ import { ItineraryModule } from './modules/itinerary/itinerary.module';
     ConfigModule.forRoot({
   isGlobal: true,
   load: [databaseConfig, jwtConfig],
-  // Use the exact, hardcoded path for your machine
-  envFilePath: 'C:/Users/adhik/TREKEASY-FINAL/.env', 
 }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],

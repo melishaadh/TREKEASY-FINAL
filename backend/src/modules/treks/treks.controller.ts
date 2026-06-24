@@ -1,6 +1,7 @@
 import {
-  Controller, Get, Post, Put, Delete, Body, Param, HttpCode, HttpStatus,
+  Controller, Get, Post, Put, Delete, Body, Param, Req, HttpCode, HttpStatus,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { TreksService, CreateTrekDto } from './treks.service';
 
 @Controller('treks')
@@ -8,7 +9,8 @@ export class TreksController {
   constructor(private readonly treksService: TreksService) {}
 
   @Get()
-  async getAll() {
+  async getAll(@Req() req: Request) {
+    const base = `${req.protocol}://${req.get('host')}`;
     const treks = await this.treksService.getAll();
     return treks.map(t => ({
       id: t._id.toString(),
@@ -19,7 +21,7 @@ export class TreksController {
       duration: t.duration,
       price: t.price,
       maxAltitude: t.maxAltitude,
-      imageUrl: t.imageUrl,
+      imageUrl: t.imageUrl ? `${base}${t.imageUrl}` : null,
       keywords: t.keywords,
       routeStages: t.routeStages,
       createdAt: t.createdAt,
@@ -28,7 +30,8 @@ export class TreksController {
   }
 
   @Get(':id')
-  async getById(@Param('id') id: string) {
+  async getById(@Param('id') id: string, @Req() req: Request) {
+    const base = `${req.protocol}://${req.get('host')}`;
     const trek = await this.treksService.getById(id);
     return {
       id: trek._id.toString(),
@@ -39,7 +42,7 @@ export class TreksController {
       duration: trek.duration,
       price: trek.price,
       maxAltitude: trek.maxAltitude,
-      imageUrl: trek.imageUrl,
+      imageUrl: trek.imageUrl ? `${base}${trek.imageUrl}` : null,
       keywords: trek.keywords,
       routeStages: trek.routeStages,
       createdAt: trek.createdAt,

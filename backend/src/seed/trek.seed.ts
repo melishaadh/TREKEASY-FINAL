@@ -45,7 +45,7 @@ class SeedModule {}
 const TREKS_DATA = [
   {
     _id: '1', name: 'Classic ABC', region: 'Annapurna Base Camp Trek', difficulty: 'Moderate',
-    duration: 7, price: 18000, maxAltitude: 4130,
+    duration: 7, price: 18000, maxAltitude: 4130, imageUrl: '/images/classicABC.jpg',
     description: 'A journey into the heart of the Himalayas. You will trek through diverse landscapes, starting from sub-tropical farmland and rising into the glacial bowl of the Annapurna Sanctuary, surrounded by towering peaks including Annapurna I and Machhapuchhre.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'teahouse', 'traditional', 'gurung village', 'moderate', 'sanctuary', 'valley hike'],
     routeStages: [
@@ -60,7 +60,7 @@ const TREKS_DATA = [
   },
   {
     _id: '2', name: 'Poon Hill Panorama ABC', region: 'Annapurna Base Camp Trek', difficulty: 'Moderate',
-    duration: 10, price: 22000, maxAltitude: 4130,
+    duration: 10, price: 22000, maxAltitude: 4130, imageUrl: '/images/poonhillpanoramaabc.webp',
     description: 'The definitive Annapurna experience that pairs the legendary Poon Hill sunrise panorama with the full ascent to Annapurna Base Camp. You earn double the rewards — an iconic dawn over the Dhaulagiri and Annapurna ranges, followed by the overwhelming 360° summit amphitheater at 4,130m.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'sunrise viewpoint', 'rhododendron', 'photographers', 'photography', 'scenic', 'hills'],
     routeStages: [
@@ -78,7 +78,7 @@ const TREKS_DATA = [
   },
   {
     _id: '3', name: 'Thorong La Circuit', region: 'Annapurna Circuit Trek', difficulty: 'Hard',
-    duration: 10, price: 25000, maxAltitude: 5416,
+    duration: 10, price: 25000, maxAltitude: 5416, imageUrl: '/images/thoronglacircuit.jpeg',
     description: 'The legendary "grand circuit." This trek encircles the entire Annapurna massif, offering a dramatic transition from the lush green hills of the mid-mountains to the stark, high-altitude arid desert of the Manang region, culminating in the crossing of the challenging 5,416m Thorong La Pass.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'high pass', 'extreme', 'legendary', 'challenging', 'iconic', 'himalayan crossing'],
     routeStages: [
@@ -96,7 +96,7 @@ const TREKS_DATA = [
   },
   {
     _id: '4', name: 'Tilicho Lake Circuit', region: 'Annapurna Circuit Trek', difficulty: 'Hard',
-    duration: 8, price: 22000, maxAltitude: 4919,
+    duration: 8, price: 22000, maxAltitude: 4919, imageUrl: '/images/tilichocircuit.jpg',
     description: 'A detour from the standard circuit leading to the world\'s highest glacial lake. The path offers dramatic blue waters set against rugged, snow-dusted peaks, providing a serene and challenging environment for experienced trekkers.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'turquoise water', 'altitude', 'glacial', 'breathtaking', 'wilderness', 'photography'],
     routeStages: [
@@ -112,7 +112,7 @@ const TREKS_DATA = [
   },
   {
     _id: '5', name: 'Ghorepani Sunrise Express', region: 'Ghorepani Poon Hill Trek', difficulty: 'Easy',
-    duration: 3, price: 8000, maxAltitude: 3210,
+    duration: 3, price: 8000, maxAltitude: 3210, imageUrl: '/images/ghorepanisunriseexpress.webp',
     description: 'This whirlwind adventure focuses on the legendary Poon Hill vantage point. Hikers traverse lush rhododendron forests and traditional Gurung villages, ultimately reaching the summit before dawn to witness a breathtaking 360-degree sunrise over the Annapurna and Dhaulagiri massifs.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'family-friendly', 'short', 'easy', 'weekend', 'beginners', 'hill station', 'panoramic'],
     routeStages: [
@@ -123,7 +123,7 @@ const TREKS_DATA = [
   },
   {
     _id: '6', name: 'Mohare Danda Community Trek', region: 'Ghorepani Poon Hill Trek', difficulty: 'Easy',
-    duration: 4, price: 10000, maxAltitude: 3300,
+    duration: 4, price: 10000, maxAltitude: 3300, imageUrl: '/images/moharedandacommunitytrek.webp',
     description: 'A community-led initiative that keeps you away from the crowds. This route focuses on sustainable tourism, passing through quiet villages and ridge-top viewpoints where you can experience the authentic hospitality of the local people.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'offbeat', 'local homestay', 'sustainable', 'quiet', 'authentic', 'non-touristy'],
     routeStages: [
@@ -135,7 +135,7 @@ const TREKS_DATA = [
   },
   {
     _id: '7', name: 'Gokyo Lakes & EBC', region: 'Everest Base Camp Trek', difficulty: 'Hard',
-    duration: 14, price: 55000, maxAltitude: 5357,
+    duration: 14, price: 55000, maxAltitude: 5357, imageUrl: '/images/gokyolakes&ebc.webp',
     description: 'The ultimate Everest region combination trek. You visit the famous turquoise Gokyo Lakes — fed by the massive Ngozumpa Glacier — and scale Gokyo Ri for an unobstructed panorama of four 8,000m peaks, then cross the dramatic Cho La to reach Everest Base Camp.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'glacial pools', 'high altitude', 'serene', 'epic views', 'adventure', 'challenging'],
     routeStages: [
@@ -157,7 +157,7 @@ const TREKS_DATA = [
   },
   {
     _id: '8', name: 'Everest Base Camp Classic', region: 'Everest Base Camp Trek', difficulty: 'Hard',
-    duration: 11, price: 45000, maxAltitude: 5364,
+    duration: 11, price: 45000, maxAltitude: 5364, imageUrl: '/images/everestbasecampclassic.jpg',
     description: 'Experience the world\'s most famous trek. Follow in the footsteps of legends as you fly into Lukla and trek through the Sherpa heartland. The route offers iconic views of Everest, Lhotse, and Nuptse, leading you to the literal foot of the world\'s tallest peak.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'iconic', 'world-famous', 'bucket-list', 'base camp', 'sherpa', 'high-mountain'],
     routeStages: [
@@ -176,7 +176,7 @@ const TREKS_DATA = [
   },
   {
     _id: '9', name: 'Renjo La Three Passes', region: 'Everest Three Passes Trek', difficulty: 'Hard',
-    duration: 16, price: 70000, maxAltitude: 5388,
+    duration: 16, price: 70000, maxAltitude: 5388, imageUrl: '/images/renjolathreepasses.jpg',
     description: 'An epic circuit of the Khumbu region crossing three iconic high passes — Renjo La, Cho La, and Kongma La — offering relentless high-altitude drama and panoramic views that include four 8,000m peaks simultaneously from Renjo La\'s summit.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'expert', 'grueling', 'remote', 'high-altitude', 'technical', 'mountaineer'],
     routeStages: [
@@ -200,7 +200,7 @@ const TREKS_DATA = [
   },
   {
     _id: '10', name: 'Kongma La Three Passes', region: 'Everest Three Passes Trek', difficulty: 'Hard',
-    duration: 18, price: 75000, maxAltitude: 5535,
+    duration: 18, price: 75000, maxAltitude: 5535, imageUrl: '/images/kongmalathreepasses.webp',
     description: 'Crosses all three legendary Khumbu high passes — Kongma La, Cho La, and Renjo La — in the most challenging order, beginning with the highest. Non-stop high-altitude alpine scenery and relentless physical demand make this the crown jewel of Khumbu trekking.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'extreme', 'alpine', 'wilderness', 'challenging', 'rugged', 'remote', 'expedition'],
     routeStages: [
@@ -226,7 +226,7 @@ const TREKS_DATA = [
   },
   {
     _id: '11', name: 'Gokyo Valley & Lakes', region: 'Gokyo Valley Trek', difficulty: 'Hard',
-    duration: 12, price: 45000, maxAltitude: 5357,
+    duration: 12, price: 45000, maxAltitude: 5357, imageUrl: '/images/gokyovalley&lakes.jpg',
     description: 'A quieter, arguably more beautiful alternative to the main EBC trail. The Gokyo Valley leads you through a string of sacred lakes fed by the immense Ngozumpa Glacier — Nepal\'s longest. Gokyo Ri rewards climbers with a panoramic view of four 8,000m peaks simultaneously.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'majestic', 'peaceful', 'turquoise', 'alpine meadow', 'scenic', 'tranquil'],
     routeStages: [
@@ -246,7 +246,7 @@ const TREKS_DATA = [
   },
   {
     _id: '12', name: 'Renjo La Pass Viewpoint', region: 'Gokyo Valley Trek', difficulty: 'Hard',
-    duration: 14, price: 55000, maxAltitude: 5388,
+    duration: 14, price: 55000, maxAltitude: 5388, imageUrl: '/images/renjolapassviewpoint.jpg',
     description: 'Combines the serene Gokyo Lakes with the dramatic crossing of the Renjo La (5,388m). From the top of the pass you are rewarded with one of the most spectacular panoramic views in the Himalaya — Everest, Makalu, Lhotse, and Cho Oyu in a single sweeping vista.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'high-altitude view', 'panoramic', 'adventure', 'dramatic', 'photography', 'trekking'],
     routeStages: [
@@ -268,7 +268,7 @@ const TREKS_DATA = [
   },
   {
     _id: '13', name: 'Langtang Valley Sanctuary', region: 'Langtang Valley Trek', difficulty: 'Moderate',
-    duration: 7, price: 20000, maxAltitude: 3798,
+    duration: 7, price: 20000, maxAltitude: 3798, imageUrl: '/images/langtangvalleysanctuary.jpg',
     description: 'A beautiful valley trek starting just 2 hours from Kathmandu, winding through some of Nepal\'s finest rhododendron forests and Tamang villages to the high pastures of the Langtang Valley. Flanked by Langtang Lirung, Dorje Lakpa, and the Tibetan plateau, this is a deeply accessible and spiritual journey.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'accessible', 'spiritual', 'cultural', 'nature', 'rhododendrons', 'valley floor'],
     routeStages: [
@@ -283,7 +283,7 @@ const TREKS_DATA = [
   },
   {
     _id: '14', name: 'Langtang & Sacred Lakes', region: 'Langtang Valley Trek', difficulty: 'Moderate',
-    duration: 10, price: 28000, maxAltitude: 4380,
+    duration: 10, price: 28000, maxAltitude: 4380, imageUrl: '/images/langtang&sacredlakes.webp',
     description: 'A two-in-one adventure combining the majestic Langtang Valley with the sacred Gosaikunda Lakes circuit. Crossing the high Lauribina Pass (4,610m) you connect these two jewels of the Langtang National Park in a memorable pilgrimage and wilderness trek.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'holy water', 'pilgrimage', 'mountain lakes', 'panoramic', 'cultural', 'high'],
     routeStages: [
@@ -301,7 +301,7 @@ const TREKS_DATA = [
   },
   {
     _id: '15', name: 'Helambu Cultural Loop', region: 'Helambu Trek', difficulty: 'Easy',
-    duration: 5, price: 12000, maxAltitude: 3640,
+    duration: 5, price: 12000, maxAltitude: 3640, imageUrl: '/images/helambuculturalloop.webp',
     description: 'A compact and culturally rich circuit through the Hyolmo (Helambu Sherpa) villages north of Kathmandu. The rolling ridgelines, ancient monasteries, and apple orchards of this underrated area reward trekkers looking for authentic village life without the high-altitude demands of other routes.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'cultural', 'short', 'easy', 'local interaction', 'heritage', 'village-life'],
     routeStages: [
@@ -314,7 +314,7 @@ const TREKS_DATA = [
   },
   {
     _id: '16', name: 'Helambu Spiritual Trail', region: 'Helambu Trek', difficulty: 'Moderate',
-    duration: 8, price: 18000, maxAltitude: 4380,
+    duration: 8, price: 18000, maxAltitude: 4380, imageUrl: '/images/helambuspiritualtrail.jpg',
     description: 'A spiritually enriching route that connects the cultural heartland of Helambu with the sacred Gosaikunda Lakes, revered by millions of Hindu and Buddhist pilgrims. Crossing the high Lauribina Pass, this trek weaves together monastery visits, ancient villages, and high-altitude lake scenery.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'spiritual', 'scenic', 'mountain', 'holy', 'nature', 'trekker', 'meditative'],
     routeStages: [
@@ -330,7 +330,7 @@ const TREKS_DATA = [
   },
   {
     _id: '17', name: 'Manaslu & Tsum Valley', region: 'Manaslu Circuit Trek', difficulty: 'Hard',
-    duration: 18, price: 80000, maxAltitude: 5106,
+    duration: 18, price: 80000, maxAltitude: 5106, imageUrl: '/images/manaslu&tsumvalley.jpg',
     description: 'Combines the remote Tsum Valley — a Himalayan beyul (hidden valley) with a living Tibetan Buddhist culture — with the dramatic Manaslu Circuit, crossing the Larkya La Pass at 5,106m. This is Nepal\'s most culturally rich high-altitude adventure, restricted to trekkers with special permits.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'hidden', 'ancient culture', 'remote', 'spiritual', 'secluded', 'unique'],
     routeStages: [
@@ -356,7 +356,7 @@ const TREKS_DATA = [
   },
   {
     _id: '18', name: 'Manaslu Round', region: 'Manaslu Circuit Trek', difficulty: 'Hard',
-    duration: 14, price: 60000, maxAltitude: 5106,
+    duration: 14, price: 60000, maxAltitude: 5106, imageUrl: '/images/manasluround.jpg',
     description: 'A restricted-area circuit around the world\'s eighth-highest peak offering authentic wilderness trekking with far fewer trekkers than Everest or Annapurna. The classic route crosses the challenging Larkya La (5,106m) and traverses the full dramatic arc of the Budhi Gandaki river gorge.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'remote', 'challenging', 'authentic', 'rugged', 'wilderness', 'off-the-beaten-path'],
     routeStages: [
@@ -378,7 +378,7 @@ const TREKS_DATA = [
   },
   {
     _id: '19', name: 'Mustang Forbidden Kingdom', region: 'Upper Mustang Trek', difficulty: 'Moderate',
-    duration: 12, price: 120000, maxAltitude: 3840,
+    duration: 12, price: 120000, maxAltitude: 3840, imageUrl: '/images/mustangforbiddenkingdom.jpg',
     description: 'Journey to the walled medieval city of Lo Manthang in the former Forbidden Kingdom of Mustang — one of the last bastions of Tibetan Buddhist culture. The arid, Mars-like landscape of eroded cliffs, ancient cliff dwellings, and colorful monasteries feels otherworldly.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'desert', 'ancient civilization', 'forbidden', 'mystic', 'cliff-caves', 'arid'],
     routeStages: [
@@ -398,7 +398,7 @@ const TREKS_DATA = [
   },
   {
     _id: '20', name: 'Damodar Kunda Expedition', region: 'Upper Mustang Trek', difficulty: 'Hard',
-    duration: 16, price: 150000, maxAltitude: 5100,
+    duration: 16, price: 150000, maxAltitude: 5100, imageUrl: '/images/damodarkundaexpedition.jpg',
     description: 'A rare and demanding expedition to the sacred Damodar Kunda lakes deep in Upper Mustang, sitting at over 5,000m. This extreme-altitude pilgrimage through the most remote terrain of the Mustang plateau combines spiritual significance with pure high-altitude wilderness adventure.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'remote', 'spiritual', 'adventurous', 'high-altitude', 'pilgrim', 'unique-landscape'],
     routeStages: [
@@ -422,7 +422,7 @@ const TREKS_DATA = [
   },
   {
     _id: '21', name: 'Dolpo-Jomsom Wilderness', region: 'Upper Dolpo Trek', difficulty: 'Hard',
-    duration: 20, price: 160000, maxAltitude: 5360,
+    duration: 20, price: 160000, maxAltitude: 5360, imageUrl: '/images/dolpojomsomwilderness.gif',
     description: 'One of Nepal\'s most remote and epic treks through the crystal mountain wilderness of Upper Dolpo — the setting of the acclaimed film "Himalaya." This forbidden plateau region crossing multiple 5,000m passes connects the ancient Bon Buddhist stronghold of Dolpo to the Mustang district at Jomsom.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'remote', 'wilderness', 'exploration', 'trans-himalayan', 'isolated', 'rugged'],
     routeStages: [
@@ -450,7 +450,7 @@ const TREKS_DATA = [
   },
   {
     _id: '22', name: 'Lower Dolpo Jewels', region: 'Upper Dolpo Trek', difficulty: 'Hard',
-    duration: 18, price: 130000, maxAltitude: 4920,
+    duration: 18, price: 130000, maxAltitude: 4920, imageUrl: '/images/lowerdolpojewels.jpg',
     description: 'Explores the accessible but still little-visited lower reaches of the Dolpo region, centered around the spectacular Shey Phoksundo Lake — Nepal\'s deepest and most pristine lake — and the ancient Bon Buddhist monasteries of the Bheri Valley.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'scenic', 'lake', 'culture', 'hidden-gems', 'authentic', 'untouched'],
     routeStages: [
@@ -476,7 +476,7 @@ const TREKS_DATA = [
   },
   {
     _id: '23', name: 'Mardi Forest Explorer', region: 'Mardi Himal Trek', difficulty: 'Easy',
-    duration: 3, price: 8000, maxAltitude: 3500,
+    duration: 3, price: 8000, maxAltitude: 3500, imageUrl: '/images/mardiforestexplorer.jpg',
     description: 'A short and magical trek through the enchanted rhododendron and oak forests of the Mardi Himal ridge. This route focuses on the lush forest experience — mist-draped trees, birdsong, and the first alpine meadows — without the higher altitude demands of the full Mardi Sky Base trek.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'short', 'peaceful', 'forest', 'misty', 'quiet', 'lush-green', 'relaxing'],
     routeStages: [
@@ -487,7 +487,7 @@ const TREKS_DATA = [
   },
   {
     _id: '24', name: 'Mardi Himal Sky Base', region: 'Mardi Himal Trek', difficulty: 'Moderate',
-    duration: 4, price: 12000, maxAltitude: 4200,
+    duration: 4, price: 12000, maxAltitude: 4200, imageUrl: '/images/mardihimalskybase.jpg',
     description: 'A relatively new, pristine ridge trek that offers unparalleled proximity to the Machhapuchhre (Fishtail) peak. This route takes you through enchanted forests to high-alpine meadows, providing stunning vistas that feel like walking on the edge of the sky.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'beginner', 'scenic', 'mountain', 'close-up', 'ridge-walk', 'accessible'],
     routeStages: [
@@ -499,7 +499,7 @@ const TREKS_DATA = [
   },
   {
     _id: '25', name: 'Dhaulagiri High Base Camp', region: 'Dhaulagiri Circuit Trek', difficulty: 'Hard',
-    duration: 12, price: 70000, maxAltitude: 4750,
+    duration: 12, price: 70000, maxAltitude: 4750, imageUrl: '/images/dhaulagirihighbasecamp.webp',
     description: 'A demanding trek to the base of Dhaulagiri — the world\'s seventh-highest mountain at 8,167m — through wild, trail-less terrain. The approach up the Myagdi Khola valley and French Pass offers one of the most raw and dramatic mountain experiences in Nepal.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'extreme', 'remote', 'expert', 'mountaineering', 'massive', 'high-elevation'],
     routeStages: [
@@ -519,7 +519,7 @@ const TREKS_DATA = [
   },
   {
     _id: '26', name: 'Dhaulagiri Hidden Wilderness', region: 'Dhaulagiri Circuit Trek', difficulty: 'Hard',
-    duration: 16, price: 90000, maxAltitude: 5360,
+    duration: 16, price: 90000, maxAltitude: 5360, imageUrl: '/images/dhaulagirihiddenwilderness.jpg',
     description: 'The full Dhaulagiri Circuit crossing the French Pass and Hidden Valley glacier on a complete circumnavigation of the seventh-highest peak. This demanding expedition-style trek is through some of Nepal\'s most remote and glaciated terrain.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'adventure', 'wild', 'remote', 'high-altitude', 'expedition', 'unexplored'],
     routeStages: [
@@ -543,7 +543,7 @@ const TREKS_DATA = [
   },
   {
     _id: '27', name: 'Rolwaling Alpine Pass', region: 'Rolwaling Valley Trek', difficulty: 'Hard',
-    duration: 14, price: 80000, maxAltitude: 5755,
+    duration: 14, price: 80000, maxAltitude: 5755, imageUrl: '/images/rolwalingalpinepass.webp',
     description: 'A technical, mountaineering-grade trek crossing the Tashi Lapcha Pass at 5,755m — connecting the mythical Rolwaling Valley to the Khumbu Sherpa heartland. Ice axes, crampons, and high-altitude experience are mandatory.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'technical', 'alpine', 'expert', 'glacial', 'mountaineering', 'challenging'],
     routeStages: [
@@ -565,7 +565,7 @@ const TREKS_DATA = [
   },
   {
     _id: '28', name: 'Rolwaling Hidden Valley', region: 'Rolwaling Valley Trek', difficulty: 'Moderate',
-    duration: 10, price: 50000, maxAltitude: 4580,
+    duration: 10, price: 50000, maxAltitude: 4580, imageUrl: '/images/rolwalinghiddenvalley.webp',
     description: 'Explores the mythical Rolwaling Valley — revered in Tibetan Buddhist tradition as a beyul (hidden sacred valley) — without the technical demands of the pass crossing. This trek offers pristine wilderness, the sacred Tsho Rolpa glacial lake, and the remote Sherpa community of Beding.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'remote', 'wilderness', 'nature', 'isolated', 'authentic', 'unspoiled'],
     routeStages: [
@@ -583,7 +583,7 @@ const TREKS_DATA = [
   },
   {
     _id: '29', name: 'Makalu Sherpani Col Route', region: 'Makalu Base Camp Trek', difficulty: 'Hard',
-    duration: 20, price: 140000, maxAltitude: 6135,
+    duration: 20, price: 140000, maxAltitude: 6135, imageUrl: '/images/makalusherpanicolroute.gif',
     description: 'One of Nepal\'s greatest wilderness adventures: a technical link from the Makalu Base Camp to the Everest region via the Sherpani Col (6,135m) and West Col (6,135m). Ice axe, crampons, and mountaineering experience are mandatory.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'extreme', 'expert', 'technical', 'adventurous', 'strenuous', 'remote-base-camp'],
     routeStages: [
@@ -611,7 +611,7 @@ const TREKS_DATA = [
   },
   {
     _id: '30', name: 'Makalu Base Camp Classic', region: 'Makalu Base Camp Trek', difficulty: 'Hard',
-    duration: 14, price: 75000, maxAltitude: 5000,
+    duration: 14, price: 75000, maxAltitude: 5000, imageUrl: '/images/makalubasecampclassic.jpg',
     description: 'The classic approach to Makalu — the world\'s fifth-highest peak — through the pristine Arun Valley and the protected Barun Wilderness. This is eastern Nepal trekking at its finest: no crowds, extraordinary biodiversity, and raw Himalayan grandeur culminating at the base of an 8,485m colossus.',
     keywords: ['beautiful', 'wonderful', 'sightseeing', 'wild', 'remote', 'nature', 'off-the-grid', 'massive-peaks', 'secluded'],
     routeStages: [

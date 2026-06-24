@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
 import * as path from 'path';
+import * as express from 'express';
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
@@ -16,6 +17,8 @@ console.log("Checking MONGODB_URI:", process.env.MONGODB_URI);
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   }));
+
+  app.use('/images', express.static(path.resolve(__dirname, '../../assets/images')));
 
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
