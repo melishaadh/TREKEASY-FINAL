@@ -38,7 +38,7 @@ export default function RootLayout() {
     <AuthProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="trek/[id]" options={{ headerShown: false, presentation: 'card' }} />
+        <Stack.Screen name="trek" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
         <Stack.Screen name="admin" options={{ headerShown: false }} />
       </Stack>

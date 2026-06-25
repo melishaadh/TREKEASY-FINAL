@@ -1,12 +1,16 @@
 import {
-  Controller, Get, Post, Put, Delete, Body, Param, Req, HttpCode, HttpStatus,
+  Controller, Get, Post, Put, Delete, Body, Param, Query, Req, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { TreksService, CreateTrekDto } from './treks.service';
+import { PersonalizationService, PersonalizationInput } from './personalization.service';
 
 @Controller('treks')
 export class TreksController {
-  constructor(private readonly treksService: TreksService) {}
+  constructor(
+    private readonly treksService: TreksService,
+    private readonly personalizationService: PersonalizationService,
+  ) {}
 
   @Get()
   async getAll(@Req() req: Request) {
@@ -48,6 +52,27 @@ export class TreksController {
       createdAt: trek.createdAt,
       updatedAt: trek.updatedAt,
     };
+  }
+
+  @Get(':id/itinerary')
+  async getItinerary(
+    @Param('id') id: string,
+    @Query('pace') pace?: string,
+    @Query('fitnessLevel') fitnessLevel?: string,
+    @Query('trekkingExperience') trekkingExperience?: string,
+  ) {
+    const trek = await this.treksService.getById(id);
+    const input: PersonalizationInput = {
+      pace: (pace as PersonalizationInput['pace']) || 'normal',
+      fitnessLevel: (fitnessLevel as PersonalizationInput['fitnessLevel']) || 'beginner',
+      trekkingExperience: (trekkingExperience as PersonalizationInput['trekkingExperience']) || 'none',
+    };
+    return this.personalizationService.generate(
+      trek.name,
+      trek.difficulty,
+      trek.routeStages,
+      input,
+    );
   }
 
   @Post()

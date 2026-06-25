@@ -206,5 +206,5 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   hintLabel: { fontSize: 11, marginBottom: 4 },
-  hintCreds: { fontSize: 14, fontWeight: '700', fontFamily: 'monospace' as any },
+  hintCreds: { fontSize: 14, fontWeight: '700', fontFamily: 'monospace' },
 });

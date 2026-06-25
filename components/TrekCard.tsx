@@ -16,11 +16,12 @@ interface TrekCardProps {
 
 export default function TrekCard({ trek, onPress, onLike, isLiked, compact }: TrekCardProps) {
   const diffColor = DIFFICULTY_COLOR[trek.difficulty] ?? C.textFaint;
+  const source = typeof trek.image === 'number' ? trek.image : { uri: trek.image || '' };
 
   if (compact) {
     return (
       <TouchableOpacity onPress={onPress} style={s.compact} activeOpacity={0.85}>
-        <Image source={{ uri: trek.image }} style={s.compactImage} resizeMode="cover" />
+        <Image source={source} style={s.compactImage} resizeMode="cover" />
         <View style={[s.diffBadge, { backgroundColor: diffColor }]}>
           <Text style={s.diffBadgeText}>{trek.difficulty}</Text>
         </View>
@@ -47,7 +48,7 @@ export default function TrekCard({ trek, onPress, onLike, isLiked, compact }: Tr
 
   return (
     <TouchableOpacity onPress={onPress} style={s.card} activeOpacity={0.88}>
-      <Image source={{ uri: trek.image }} style={s.cardImage} resizeMode="cover" />
+      <Image source={source} style={s.cardImage} resizeMode="cover" />
 
       <TouchableOpacity onPress={onLike} style={s.likeOverlay} hitSlop={6}>
         <Heart

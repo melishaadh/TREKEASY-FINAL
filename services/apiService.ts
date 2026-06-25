@@ -100,7 +100,20 @@
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3001/api';
 
-// Session storage
+// Cross-platform storage (localStorage on web, in-memory fallback on native)
+const memoryStore = new Map<string, string>();
+const storage = {
+  getItem: (key: string): string | null => {
+    try { return localStorage.getItem(key); } catch { return memoryStore.get(key) ?? null; }
+  },
+  setItem: (key: string, value: string): void => {
+    try { localStorage.setItem(key, value); } catch { memoryStore.set(key, value); }
+  },
+  removeItem: (key: string): void => {
+    try { localStorage.removeItem(key); } catch { memoryStore.delete(key); }
+  },
+};
+
 const SESSION_KEY = 'trekEasyAdminSession';
 const SESSION_TTL = 8 * 60 * 60 * 1000;
 
@@ -112,11 +125,11 @@ interface AdminSession {
 
 function getSession(): AdminSession | null {
   try {
-    const raw = localStorage.getItem(SESSION_KEY);
+    const raw = storage.getItem(SESSION_KEY);
     if (!raw) return null;
     const s: AdminSession = JSON.parse(raw);
     if (Date.now() > s.expiresAt) {
-      localStorage.removeItem(SESSION_KEY);
+      storage.removeItem(SESSION_KEY);
       return null;
     }
     return s;
@@ -127,7 +140,7 @@ function getSession(): AdminSession | null {
 
 function setSession(data: Pick<AdminSession, 'access_token' | 'admin'>): void {
   try {
-    localStorage.setItem(
+    storage.setItem(
       SESSION_KEY,
       JSON.stringify({ ...data, expiresAt: Date.now() + SESSION_TTL })
     );
@@ -135,7 +148,7 @@ function setSession(data: Pick<AdminSession, 'access_token' | 'admin'>): void {
 }
 
 function clearSession(): void {
-  try { localStorage.removeItem(SESSION_KEY); } catch {}
+  try { storage.removeItem(SESSION_KEY); } catch {}
 }
 
 function getAuthHeaders(): HeadersInit {
@@ -615,6 +628,48 @@ export const treksApi = {
       const data = await res.json();
       if (data.error) return null;
       return data as Trek;
+    } catch {
+      return null;
+    }
+  },
+};
+
+// ─── Itinerary API ────────────────────────────────────────────────────────────
+
+export interface ItineraryDay {
+  day: number;
+  from: string;
+  to: string;
+  distance: number;
+  elevationGain: number;
+  estimatedHours: number;
+  checkpoint: string;
+  restStops: string[];
+}
+
+export interface PersonalizedItinerary {
+  trekName: string;
+  totalDays: number;
+  totalDistance: number;
+  suitability: 'Low' | 'Moderate' | 'High';
+  cautionMessage: string;
+  itinerary: ItineraryDay[];
+}
+
+export const itineraryApi = {
+  getForTrek: async (
+    trekId: string,
+    params?: { pace?: string; fitnessLevel?: string; trekkingExperience?: string },
+  ): Promise<PersonalizedItinerary | null> => {
+    try {
+      const query = new URLSearchParams();
+      if (params?.pace) query.set('pace', params.pace);
+      if (params?.fitnessLevel) query.set('fitnessLevel', params.fitnessLevel);
+      if (params?.trekkingExperience) query.set('trekkingExperience', params.trekkingExperience);
+      const qs = query.toString();
+      const url = `${API_URL}/treks/${trekId}/itinerary${qs ? `?${qs}` : ''}`;
+      const res = await fetch(url);
+      return await res.json();
     } catch {
       return null;
     }

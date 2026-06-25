@@ -41,7 +41,7 @@ function AdminShell() {
   return (
     <View style={[s.shell, { backgroundColor: t.bg }]}>
       <Sidebar />
-      <View style={{ flex: 1, overflow: 'hidden' as any }}>
+      <View style={{ flex: 1, overflow: 'hidden' }}>
         <Slot />
       </View>
     </View>

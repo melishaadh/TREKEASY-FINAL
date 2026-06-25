@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TreksController } from './treks.controller';
 import { TreksService } from './treks.service';
+import { PersonalizationService } from './personalization.service';
 import { Trek, TrekSchema } from '@/schemas/trek.schema';
 
 @Module({
@@ -9,7 +10,7 @@ import { Trek, TrekSchema } from '@/schemas/trek.schema';
     MongooseModule.forFeature([{ name: Trek.name, schema: TrekSchema }]),
   ],
   controllers: [TreksController],
-  providers: [TreksService],
-  exports: [TreksService],
+  providers: [TreksService, PersonalizationService],
+  exports: [TreksService, PersonalizationService],
 })
 export class TreksModule {}

@@ -23,8 +23,6 @@ export interface Destination {
 }
 
 
-function img(i: number) { return MOUNTAIN_IMAGES[i % MOUNTAIN_IMAGES.length]; }
-
 function diff(alt: number): Difficulty {
   if (alt <= 3500) return 'Easy';
   if (alt <= 4500) return 'Moderate';

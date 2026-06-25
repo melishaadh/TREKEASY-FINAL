@@ -257,7 +257,7 @@ const s = StyleSheet.create({
     maxWidth: 680,
     borderRadius: 18,
     borderWidth: 1,
-    maxHeight: '90%' as any,
+    maxHeight: '90%',
     overflow: 'hidden',
   },
   header: {

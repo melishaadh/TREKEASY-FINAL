@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { ArrowLeft, Heart, Mountain, Clock, Users, TrendingUp } from 'lucide-react-native';
+import { ArrowLeft, Heart, Mountain, Clock, Users, TrendingUp, Map } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import LoginPromptModal from '@/components/LoginPromptModal';
 import { DESTINATIONS } from '@/data/destinations';
@@ -90,6 +90,7 @@ export default function TrekDetailScreen() {
   }
 
   const diffColor = DIFFICULTY_COLOR[trek.difficulty] ?? C.textFaint;
+  const trekImage = typeof trek.image === 'number' ? trek.image : { uri: trek.image || '' };
 
   const handleLike = () => {
     if (!isLoggedIn) {
@@ -109,13 +110,17 @@ export default function TrekDetailScreen() {
     router.push('/chatroom');
   };
 
+  const handleViewItinerary = () => {
+    router.push(`/trek/${id}/itinerary`);
+  };
+
   return (
     <View style={s.root}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <ScrollView showsVerticalScrollIndicator={false} bounces>
         {/* Hero */}
         <View style={s.heroWrap}>
-          <Image source={{ uri: trek.image }} style={s.heroImage} resizeMode="cover" />
+          <Image source={trekImage} style={s.heroImage} resizeMode="cover" />
           <View style={s.heroScrim} />
 
           <TouchableOpacity onPress={() => router.back()} style={s.heroBackBtn}>
@@ -198,10 +203,16 @@ export default function TrekDetailScreen() {
             <Text style={s.footerLabel}>Starting from</Text>
             <Text style={s.footerPrice}>NPR {trek.priceNPR.toLocaleString()}</Text>
           </View>
-          <TouchableOpacity onPress={handleCreateGroup} style={s.groupBtn}>
-            <Users size={18} color={C.white} strokeWidth={2} />
-            <Text style={s.groupBtnText}>Create Group</Text>
-          </TouchableOpacity>
+          <View style={s.footerButtons}>
+            <TouchableOpacity onPress={handleViewItinerary} style={s.itineraryBtn}>
+              <Map size={18} color={C.white} strokeWidth={2} />
+              <Text style={s.itineraryBtnText}>Itinerary</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleCreateGroup} style={s.groupBtn}>
+              <Users size={18} color={C.white} strokeWidth={2} />
+              <Text style={s.groupBtnText}>Create Group</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -376,6 +387,22 @@ const s = StyleSheet.create({
   },
   footerLabel: { color: C.textFaint, fontSize: 11, marginBottom: 2 },
   footerPrice: { color: C.brand, fontSize: 22, fontWeight: '700' },
+  footerButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  itineraryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: C.elevated,
+    borderWidth: 1,
+    borderColor: C.border,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 16,
+  },
+  itineraryBtnText: { color: C.white, fontSize: 14, fontWeight: '600' },
   groupBtn: {
     flexDirection: 'row',
     alignItems: 'center',

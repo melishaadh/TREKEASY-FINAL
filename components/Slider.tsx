@@ -57,7 +57,7 @@ export default function Slider({
     ? ((value - min) / (max - min)) * 100
     : ((value - min) / (max - min)) * 100;
 
-  const thumbLeft = `${((value - min) / (max - min)) * 100}%`;
+  const thumbLeft = `${((value - min) / (max - min)) * 100}%` as const;
 
   return (
     <View style={s.wrap}>
@@ -75,9 +75,9 @@ export default function Slider({
         {/* Track */}
         <View style={s.track} />
         {/* Fill */}
-        <View style={[s.fill, { width: `${((value - min) / (max - min)) * 100}%` as any }]} />
+        <View style={[s.fill, { width: `${((value - min) / (max - min)) * 100}%` }]} />
         {/* Thumb */}
-        <View style={[s.thumb, { left: thumbLeft as any }]} />
+        <View style={[s.thumb, { left: thumbLeft }]} />
       </View>
 
       <View style={s.minMax}>
@@ -136,7 +136,7 @@ const s = StyleSheet.create({
     borderRadius: 11,
     backgroundColor: C.brand,
     marginLeft: -11,
-    top: '50%' as any,
+    top: '50%',
     marginTop: -11,
     borderWidth: 3,
     borderColor: C.white,
