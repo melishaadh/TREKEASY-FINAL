@@ -51,7 +51,17 @@ export class PersonalizationService {
     const distanceMultiplier = isSlow ? 0.75 : isFast ? 1.15 : 1.0;
     const hoursMultiplier = isSlow ? 0.85 : isFast ? 1.1 : 1.0;
 
-    let adjustedStages: RouteStage[] = stages.map((s) => {
+    const toPlain = (s: RouteStage): RouteStage => ({
+      day: Number(s.day) || 0,
+      from: s.from ?? '',
+      to: s.to ?? '',
+      distance: Number(s.distance) || 0,
+      elevationGain: Number(s.elevationGain) || 0,
+      estimatedHours: Number(s.estimatedHours) || 0,
+      checkpoint: s.checkpoint ?? '',
+      restStop: s.restStop ?? '',
+    });
+    let adjustedStages: RouteStage[] = stages.map(toPlain).map((s) => {
       const dist = Math.round(s.distance * distanceMultiplier);
       const hours = Math.round(s.estimatedHours * hoursMultiplier);
       return {
@@ -168,7 +178,7 @@ export class PersonalizationService {
 
   private insertRestCheckpoints(stages: RouteStage[]): RouteStage[] {
     return stages.map((s) => {
-      if (s.distance > 8 && !s.checkpoint.toLowerCase().includes('rest')) {
+      if (s.distance > 8 && s.checkpoint && !s.checkpoint.toLowerCase().includes('rest')) {
         return {
           ...s,
           checkpoint: s.checkpoint
