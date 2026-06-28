@@ -10,6 +10,7 @@ import { GroupsModule } from './modules/groups/groups.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { TreksModule } from './modules/treks/treks.module';
 import { ItineraryModule } from './modules/itinerary/itinerary.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ItineraryModule } from './modules/itinerary/itinerary.module';
     DashboardModule,
     TreksModule,
     ItineraryModule,
+    ReviewsModule,
   ],
 })
 export class AppModule {}

@@ -712,6 +712,45 @@ export const itineraryApi = {
   },
 };
 
+// ─── Reviews API ──────────────────────────────────────────────────────────────
+
+export interface ReviewItem {
+  id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+export interface ReviewResponse {
+  average: number;
+  total: number;
+  reviews: ReviewItem[];
+}
+
+export const reviewsApi = {
+  getByTrek: async (trekId: string): Promise<ReviewResponse | null> => {
+    try {
+      const res = await fetch(`${API_URL}/reviews/trek/${trekId}`);
+      return await res.json();
+    } catch {
+      return null;
+    }
+  },
+
+  create: async (trekId: string, rating: number, comment: string): Promise<{ id: string } | null> => {
+    try {
+      const res = await fetch(`${API_URL}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trekId, rating, comment }),
+      });
+      return await res.json();
+    } catch {
+      return null;
+    }
+  },
+};
+
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────
 
 export const dashboardApi = {

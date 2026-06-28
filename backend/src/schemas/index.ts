@@ -5,3 +5,4 @@ export * from './chat-group.schema';
 export * from './admin.schema';
 export * from './trek.schema';
 export * from './itinerary.schema';
+export * from './review.schema';

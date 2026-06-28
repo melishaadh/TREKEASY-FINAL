@@ -5,6 +5,7 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  TextInput,
   StatusBar,
   StyleSheet,
   Dimensions,
@@ -12,11 +13,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { ArrowLeft, Heart, Mountain, Clock, Users, TrendingUp, Map, CheckCircle } from 'lucide-react-native';
+import { ArrowLeft, Heart, Mountain, Clock, Users, TrendingUp, Map, CheckCircle, Star } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import LoginPromptModal from '@/components/LoginPromptModal';
 import { DESTINATIONS } from '@/data/destinations';
-import { treksApi, Trek } from '@/services/apiService';
+import { treksApi, Trek, reviewsApi, ReviewItem } from '@/services/apiService';
 import { useAuth } from '@/context/AuthContext';
 import { C, DIFFICULTY_COLOR } from '@/constants/theme';
 
@@ -49,8 +50,24 @@ export default function TrekDetailScreen() {
   const [trek, setTrek] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [avgRating, setAvgRating] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
   const [loginPrompt, setLoginPrompt] = useState(false);
   const [loginMessage, setLoginMessage] = useState('');
+
+  const fetchReviews = async () => {
+    const res = await reviewsApi.getByTrek(id);
+    if (res) {
+      setReviews(res.reviews);
+      setAvgRating(res.average);
+      setReviewCount(res.total);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -69,7 +86,45 @@ export default function TrekDetailScreen() {
         setLoading(false);
       }
     })();
+    fetchReviews();
   }, [id]);
+
+  const handleSubmitReview = async () => {
+    if (!isLoggedIn) {
+      setLoginMessage('Please log in to submit a review.');
+      setLoginPrompt(true);
+      return;
+    }
+    setSubmittingReview(true);
+    const res = await reviewsApi.create(id, reviewRating, reviewComment);
+    setSubmittingReview(false);
+    if (res) {
+      setReviewRating(5);
+      setReviewComment('');
+      setShowReviewForm(false);
+      fetchReviews();
+    }
+  };
+
+  const renderStars = (rating: number, interactive = false) => {
+    return Array.from({ length: 5 }, (_, i) => {
+      const filled = i < rating;
+      return (
+        <TouchableOpacity
+          key={i}
+          disabled={!interactive}
+          onPress={() => interactive && setReviewRating(i + 1)}
+        >
+          <Star
+            size={interactive ? 28 : 14}
+            color={filled ? '#f59e0b' : C.textFaint}
+            fill={filled ? '#f59e0b' : 'transparent'}
+            strokeWidth={1.5}
+          />
+        </TouchableOpacity>
+      );
+    });
+  };
 
   if (loading) {
     return (
@@ -222,6 +277,66 @@ export default function TrekDetailScreen() {
               <Text style={s.detailLbl}>Region</Text>
             </View>
           </View>
+
+          {/* Reviews */}
+          <Text style={s.heading}>Reviews {reviewCount > 0 && <Text style={{ color: C.textMuted, fontWeight: '400', fontSize: 15 }}>({reviewCount})</Text>}</Text>
+
+          {avgRating > 0 && (
+            <View style={s.avgRatingRow}>
+              <View style={{ flexDirection: 'row', gap: 2 }}>{renderStars(Math.round(avgRating))}</View>
+              <Text style={s.avgRatingText}>{avgRating.toFixed(1)}</Text>
+            </View>
+          )}
+
+          {reviews.length === 0 && !showReviewForm && (
+            <Text style={s.noReviews}>No reviews yet. Be the first to review!</Text>
+          )}
+
+          {reviews.map(r => (
+            <View key={r.id} style={s.reviewCard}>
+              <View style={{ flexDirection: 'row', gap: 2 }}>{renderStars(r.rating)}</View>
+              {r.comment ? <Text style={s.reviewComment}>{r.comment}</Text> : null}
+              <Text style={s.reviewDate}>{new Date(r.createdAt).toLocaleDateString()}</Text>
+            </View>
+          ))}
+
+          {showReviewForm && (
+            <View style={s.reviewForm}>
+              <View style={{ flexDirection: 'row', gap: 4, marginBottom: 12 }}>{renderStars(reviewRating, true)}</View>
+              <TextInput
+                style={s.reviewInput}
+                placeholder="Write your review..."
+                placeholderTextColor={C.textFaint}
+                multiline
+                value={reviewComment}
+                onChangeText={setReviewComment}
+              />
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <TouchableOpacity
+                  onPress={() => { setShowReviewForm(false); setReviewComment(''); setReviewRating(5); }}
+                  style={s.cancelReviewBtn}
+                >
+                  <Text style={s.cancelReviewBtnText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleSubmitReview}
+                  disabled={submittingReview}
+                  style={[s.submitReviewBtn, submittingReview && { opacity: 0.6 }]}
+                >
+                  <Text style={s.submitReviewBtnText}>
+                    {submittingReview ? 'Submitting...' : 'Submit Review'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {!showReviewForm && (
+            <TouchableOpacity onPress={() => setShowReviewForm(true)} style={s.addReviewBtn}>
+              <Star size={16} color={C.white} strokeWidth={2} />
+              <Text style={s.addReviewBtnText}>Write a Review</Text>
+            </TouchableOpacity>
+          )}
 
           <View style={{ height: 130 }} />
         </View>
@@ -473,4 +588,73 @@ const s = StyleSheet.create({
     elevation: 6,
   },
   groupBtnText: { color: C.white, fontSize: 15, fontWeight: '700' },
+
+  /* Reviews */
+  avgRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  avgRatingText: { color: C.white, fontSize: 18, fontWeight: '700' },
+  noReviews: { color: C.textMuted, fontSize: 14, marginBottom: 16 },
+  reviewCard: {
+    backgroundColor: C.surface,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: C.border,
+    marginBottom: 10,
+    gap: 6,
+  },
+  reviewComment: { color: C.textSub, fontSize: 14, lineHeight: 20 },
+  reviewDate: { color: C.textFaint, fontSize: 11, marginTop: 2 },
+  addReviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: C.brand,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  addReviewBtnText: { color: C.white, fontSize: 14, fontWeight: '700' },
+  reviewForm: {
+    backgroundColor: C.surface,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: C.border,
+    marginBottom: 16,
+  },
+  reviewInput: {
+    backgroundColor: C.bg,
+    color: C.white,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: C.border,
+    padding: 12,
+    fontSize: 14,
+    minHeight: 80,
+    textAlignVertical: 'top',
+    marginBottom: 12,
+  },
+  cancelReviewBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: C.border,
+    alignItems: 'center',
+  },
+  cancelReviewBtnText: { color: C.textSub, fontSize: 14, fontWeight: '600' },
+  submitReviewBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: C.brand,
+    alignItems: 'center',
+  },
+  submitReviewBtnText: { color: C.white, fontSize: 14, fontWeight: '700' },
 });
