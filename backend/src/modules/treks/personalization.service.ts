@@ -24,6 +24,11 @@ export interface ItineraryDay {
   activityType: 'trekking' | 'travel' | 'rest' | 'mixed';
   description: string;
 }
+const LOCATION_ALIASES: Record<string, string[]> = {
+  'kathmandu': ['bhaktapur', 'lalitpur', 'patan', 'kirtipur', 'tokha', 'budhanilkantha', 'suryabinayak', 'madhyapur thimi'],
+  'pokhara': ['lekhnath'],
+};
+
 export interface PersonalizedItinerary {
   trekName: string;
   totalDays: number;
@@ -167,9 +172,19 @@ export class PersonalizationService {
       : '';
     const origin = input.startLocation?.trim() || suggestedStart;
     const finalDest = input.finalDestination?.trim() || trekEnd;
-    if (origin !== suggestedStart) {
+
+    // Normalize nearby locations so e.g. Bhaktapur → Kathmandu
+    const normalizeLoc = (loc: string): string => {
+      const lower = loc.toLowerCase();
+      for (const [canonical, aliases] of Object.entries(LOCATION_ALIASES)) {
+        if (lower === canonical || aliases.includes(lower)) return canonical;
+      }
+      return loc;
+    };
+
+    if (normalizeLoc(origin) !== normalizeLoc(suggestedStart)) {
       const originDest = firstRealIdx > 0 ? firstStageFrom : suggestedStart;
-      if (origin !== originDest) {
+      if (normalizeLoc(origin) !== normalizeLoc(originDest)) {
         adjustedStages.unshift({
           day: 0, from: origin, to: originDest,
           distance: 0, elevationGain: 0, estimatedHours: 0,

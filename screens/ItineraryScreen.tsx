@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,15 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { itineraryApi, PersonalizedItinerary, ItineraryDay } from '@/services/apiService';
 import { C } from '@/constants/theme';
+
+const COMMON_LOCATIONS = [
+  'Kathmandu', 'Pokhara', 'Lukla', 'Bhaktapur', 'Lalitpur',
+  'Syabrubesi', 'Sundarijal', 'Besisahar', 'Arughat', 'Soti Khola',
+  'Jiri', 'Tumlingtar', 'Simigaon', 'Juphal', 'Nepalgunj',
+  'Chitwan', 'Bharatpur', 'Gorkha', 'Bandipur', 'Nuwakot',
+  'Dhulikhel', 'Nagarkot', 'Kakani', 'Damak', 'Biratnagar',
+  'Janakpur', 'Butwal', 'Hetauda', 'Dhangadhi', 'Mahendranagar',
+];
 
 const SUITABILITY_COLOR: Record<string, string> = {
   Low: C.red,
@@ -87,6 +96,49 @@ function Selector<T extends string>({
   );
 }
 
+function LocationInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
+  const [focused, setFocused] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<TextInput>(null);
+
+  const suggestions = useMemo(() => {
+    if (!draft.trim()) return [];
+    const q = draft.toLowerCase();
+    return COMMON_LOCATIONS.filter(l => l.toLowerCase().includes(q)).slice(0, 8);
+  }, [draft]);
+
+  const select = (loc: string) => {
+    setDraft(loc);
+    onChange(loc);
+    setFocused(false);
+    inputRef.current?.blur();
+  };
+
+  return (
+    <View>
+      <TextInput
+        ref={inputRef}
+        style={s.targetInput}
+        value={draft}
+        onChangeText={v => { setDraft(v); onChange(v); }}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setTimeout(() => setFocused(false), 150)}
+        placeholder={placeholder}
+        placeholderTextColor={C.textFaint}
+      />
+      {focused && suggestions.length > 0 && (
+        <View style={s.suggestionsList}>
+          {suggestions.map(loc => (
+            <TouchableOpacity key={loc} style={s.suggestionItem} onPress={() => select(loc)} activeOpacity={0.7}>
+              <Text style={s.suggestionText}>{loc}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
 function PrefsForm({ prefs, onChange, standardDuration }: { prefs: ItineraryPrefs; onChange: (p: ItineraryPrefs) => void; standardDuration?: number | null }) {
   const set = (partial: Partial<ItineraryPrefs>) => onChange({ ...prefs, ...partial });
   const [geoLoading, setGeoLoading] = useState(false);
@@ -122,12 +174,10 @@ function PrefsForm({ prefs, onChange, standardDuration }: { prefs: ItineraryPref
             </Text>
           </TouchableOpacity>
         </View>
-        <TextInput
-          style={s.targetInput}
+        <LocationInput
           value={prefs.startLocation}
-          onChangeText={v => set({ startLocation: v })}
+          onChange={v => set({ startLocation: v })}
           placeholder="e.g. Kathmandu, Pokhara"
-          placeholderTextColor={C.textFaint}
         />
       </View>
       <View style={ss.selectorWrap}>
@@ -640,6 +690,29 @@ const s = StyleSheet.create({
     color: C.white,
     fontSize: 14,
   },
+  suggestionsList: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 12,
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  suggestionText: { color: C.white, fontSize: 14, fontWeight: '500' },
 
   /* Title Section */
   titleSection: {
