@@ -11,6 +11,7 @@ export interface PersonalizationInput {
   weight?: number;
   groupSize?: number;
   previousTreks?: number;
+  startLocation?: string;
 }
 
 export interface ItineraryDay {
@@ -119,6 +120,20 @@ export class PersonalizationService {
         estimatedHours: hours > 0 ? Math.max(1, hours) : 0,
       };
     });
+
+    if (input.startLocation && input.startLocation.trim() && adjustedStages.length > 0 && input.startLocation.trim() !== adjustedStages[0].from) {
+      const firstFrom = adjustedStages[0].from;
+      adjustedStages.unshift({
+        day: 0,
+        from: input.startLocation.trim(),
+        to: firstFrom,
+        distance: 0,
+        elevationGain: 0,
+        estimatedHours: 0,
+        checkpoint: `Travel from ${input.startLocation.trim()} to ${firstFrom}`,
+        restStop: '',
+      });
+    }
 
     const needsRestMoreFreq = hasHealthIssue || (age && age >= 50) || (weight && weight >= 120);
     const restEvery = needsRestMoreFreq ? 1 : isSlow ? 2 : 0;

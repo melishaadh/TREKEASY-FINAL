@@ -669,6 +669,7 @@ export const itineraryApi = {
       weight?: number;
       groupSize?: number;
       previousTreks?: number;
+      startLocation?: string;
     },
   ): Promise<PersonalizedItinerary | null> => {
     try {
@@ -682,6 +683,7 @@ export const itineraryApi = {
       if (params?.weight) query.set('weight', String(params.weight));
       if (params?.groupSize) query.set('groupSize', String(params.groupSize));
       if (params?.previousTreks) query.set('previousTreks', String(params.previousTreks));
+      if (params?.startLocation) query.set('startLocation', params.startLocation);
       const qs = query.toString();
       const url = `${API_URL}/treks/${trekId}/itinerary${qs ? `?${qs}` : ''}`;
       const res = await fetch(url);

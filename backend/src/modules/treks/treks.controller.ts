@@ -66,6 +66,7 @@ export class TreksController {
     @Query('weight') weight?: string,
     @Query('groupSize') groupSize?: string,
     @Query('previousTreks') previousTreks?: string,
+    @Query('startLocation') startLocation?: string,
   ) {
     const trek = await this.treksService.getById(id);
     const input: PersonalizationInput = {
@@ -78,6 +79,7 @@ export class TreksController {
       weight: weight ? parseInt(weight, 10) : undefined,
       groupSize: groupSize ? parseInt(groupSize, 10) : undefined,
       previousTreks: previousTreks ? parseInt(previousTreks, 10) : undefined,
+      startLocation,
     };
     return this.personalizationService.generate(
       trek.name,
