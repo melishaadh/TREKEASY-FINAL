@@ -636,32 +636,42 @@ export const treksApi = {
 
 // ─── Itinerary API ────────────────────────────────────────────────────────────
 
-export interface ItineraryDay {
-  day: number;
+export interface ActivityDetail {
+  type: 'road_travel' | 'flight' | 'trekking' | 'rest' | 'acclimatization' | 'checkpoint_stop' | 'meal_break' | 'recovery_break' | 'sightseeing';
   from: string;
   to: string;
   distance: number;
   elevationGain: number;
-  estimatedHours: number;
-  checkpoint: string;
-  restStops: string[];
-  activityType: 'trekking' | 'travel' | 'rest' | 'mixed';
+  durationHours: number;
+  effortScore: number;
   description: string;
+}
+
+export interface ItineraryDay {
+  day: number;
+  activities: ActivityDetail[];
+  totalHours: number;
+  totalDistance: number;
+  totalElevationGain: number;
+  maxAltitude: number;
+  overnightLocation: string;
+  notes: string[];
 }
 
 export interface PersonalizedItinerary {
   trekName: string;
   totalDays: number;
   totalDistance: number;
+  totalEffort: number;
+  maxAltitude: number;
   suitability: 'Low' | 'Moderate' | 'High';
-  cautionMessage: string;
-  suggestedStart: string;
+  cautions: string[];
   origin: string;
   finalDestination: string;
-  trekEnd: string;
-  preTrekSummary?: string;
-  postTrekSummary?: string;
-  itinerary: ItineraryDay[];
+  days: ItineraryDay[];
+  rejectionReason?: string;
+  minimumSafeDays?: number;
+  recommendedDays?: number;
 }
 
 export const itineraryApi = {

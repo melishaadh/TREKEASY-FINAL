@@ -13,10 +13,10 @@ import {
   Platform,
 } from 'react-native';
 import {
-  ArrowLeft, Mountain, Clock, Map, MapPin, AlertTriangle, CheckCircle, Filter, X,
+  ArrowLeft, Mountain, Clock, Map, MapPin, AlertTriangle, CheckCircle, Filter, X, Info,
 } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { itineraryApi, PersonalizedItinerary, ItineraryDay } from '@/services/apiService';
+import { itineraryApi, PersonalizedItinerary, ItineraryDay, ActivityDetail } from '@/services/apiService';
 import { C } from '@/constants/theme';
 
 const COMMON_LOCATIONS = [
@@ -27,12 +27,6 @@ const COMMON_LOCATIONS = [
   'Dhulikhel', 'Nagarkot', 'Kakani', 'Damak', 'Biratnagar',
   'Janakpur', 'Butwal', 'Hetauda', 'Dhangadhi', 'Mahendranagar',
 ];
-
-const SUITABILITY_COLOR: Record<string, string> = {
-  Low: C.red,
-  Moderate: C.amber,
-  High: C.green,
-};
 
 const PACE_OPTIONS = ['slow', 'normal', 'fast'] as const;
 const FITNESS_OPTIONS = ['beginner', 'intermediate', 'advanced', 'expert'] as const;
@@ -167,10 +161,10 @@ function PrefsForm({ prefs, onChange, standardDuration }: { prefs: ItineraryPref
     <>
       <View style={ss.selectorWrap}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={ss.selectorLabel}>From (Your Location) <Text style={{color: C.red}}>*</Text></Text>
+          <Text style={ss.selectorLabel}>From (Your Location) <Text style={{color: C.red}}> *</Text></Text>
           <TouchableOpacity onPress={detectLocation} disabled={geoLoading}>
             <Text style={{ color: C.brandLight, fontSize: 12, fontWeight: '600' }}>
-              {geoLoading ? 'Detecting…' : '📍 Detect'}
+              {geoLoading ? 'Detecting...' : 'Detect'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -220,11 +214,113 @@ function PrefsForm({ prefs, onChange, standardDuration }: { prefs: ItineraryPref
           value={prefs.targetDays}
           onChangeText={v => set({ targetDays: v })}
           keyboardType="number-pad"
-          placeholder={standardDuration ? `e.g. ${standardDuration} (default: standard ${standardDuration} days)` : "e.g. 10"}
+          placeholder={standardDuration ? `e.g. ${standardDuration} (default: ${standardDuration} days)` : "e.g. 10"}
           placeholderTextColor={C.textFaint}
         />
       </View>
     </>
+  );
+}
+
+const ACTIVITY_ICONS: Record<string, string> = {
+  road_travel: 'Drive',
+  flight: 'Fly',
+  trekking: 'Hike',
+  rest: 'Rest',
+  acclimatization: 'Acclimate',
+  checkpoint_stop: 'Stop',
+  meal_break: 'Meal',
+  recovery_break: 'Recover',
+  sightseeing: 'Explore',
+};
+
+function ActivityRow({ activity, isLast }: { activity: ActivityDetail; isLast: boolean }) {
+  const label = ACTIVITY_ICONS[activity.type] || activity.type;
+  const color = activity.type === 'trekking' ? C.green
+    : activity.type === 'rest' || activity.type === 'acclimatization' ? C.amber
+    : activity.type === 'road_travel' || activity.type === 'flight' ? C.blue
+    : C.textMuted;
+
+  return (
+    <View style={s.activityRow}>
+      <View style={s.activityTimeline}>
+        <View style={[s.activityDot, { backgroundColor: color }]} />
+        {!isLast && <View style={[s.activityLine, { backgroundColor: C.border }]} />}
+      </View>
+      <View style={s.activityBody}>
+        <View style={s.activityHead}>
+          <Text style={[s.activityLabel, { color }]}>{label}</Text>
+          {activity.durationHours > 0 && (
+            <Text style={s.activityTime}>{activity.durationHours.toFixed(1)}h</Text>
+          )}
+        </View>
+        <Text style={s.activityRoute} numberOfLines={1}>
+          {activity.from === activity.to ? activity.from : `${activity.from}  →  ${activity.to}`}
+        </Text>
+        {activity.description && activity.type !== 'rest' && activity.type !== 'acclimatization' ? (
+          <Text style={s.activityDesc}>{activity.description}</Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function DayCard({ day }: { day: ItineraryDay }) {
+  const isRest = day.activities.every(a => a.type === 'rest' || a.type === 'acclimatization');
+  const isTravel = day.activities.every(a => a.type === 'road_travel' || a.type === 'flight');
+  const dotColor = isRest ? C.amber : isTravel ? C.blue : C.green;
+
+  return (
+    <View style={s.dayCard}>
+      <View style={s.dayCardHead}>
+        <View style={[s.dayNumDot, { backgroundColor: dotColor }]}>
+          <Text style={s.dayNumText}>{day.day}</Text>
+        </View>
+        <View style={s.dayInfo}>
+          <Text style={s.dayRoute} numberOfLines={1}>
+            {isRest
+              ? day.overnightLocation || 'Rest day'
+              : `${day.activities[0]?.from || ''}  →  ${day.overnightLocation || ''}`}
+          </Text>
+          <View style={s.dayMeta}>
+            {day.totalHours > 0 && (
+              <View style={[s.dayChip, { backgroundColor: C.brandDim, borderColor: C.brand + '40' }]}>
+                <Clock size={11} color={C.brandLight} strokeWidth={2.5} />
+                <Text style={[s.dayChipText, { color: C.brandLight }]}>{day.totalHours.toFixed(1)}h</Text>
+              </View>
+            )}
+            {day.totalDistance > 0 && (
+              <View style={[s.dayChip, { backgroundColor: C.blue + '15', borderColor: C.blue + '30' }]}>
+                <Mountain size={11} color={C.blue} strokeWidth={2.5} />
+                <Text style={[s.dayChipText, { color: C.blue }]}>{day.totalDistance.toFixed(1)} km</Text>
+              </View>
+            )}
+            {day.totalElevationGain > 0 && (
+              <View style={[s.dayChip, { backgroundColor: C.green + '15', borderColor: C.green + '30' }]}>
+                <Text style={[s.dayChipText, { color: C.green }]}>+{Math.round(day.totalElevationGain)}m</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
+
+      <View style={s.dayActivities}>
+        {day.activities.map((act, i) => (
+          <ActivityRow key={i} activity={act} isLast={i === day.activities.length - 1} />
+        ))}
+      </View>
+
+      {day.notes.length > 0 ? (
+        <View style={s.dayNotes}>
+          {day.notes.map((note, i) => (
+            <View key={i} style={s.dayNoteRow}>
+              <Info size={11} color={C.amber} strokeWidth={2} />
+              <Text style={s.dayNoteText}>{note}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -377,12 +473,12 @@ export default function ItineraryScreen() {
     return (
       <View style={s.center}>
         <ActivityIndicator size="large" color={C.brand} />
-        <Text style={s.loadingText}>Creating your personalized itinerary…</Text>
+        <Text style={s.loadingText}>Creating your personalized itinerary...</Text>
       </View>
     );
   }
 
-  // ─── Error state (after having data) ─────────────────────────────────────────────
+  // ─── Error state ─────────────────────────────────────────────────────────────────
   if (error && !data) {
     return (
       <View style={s.center}>
@@ -394,9 +490,74 @@ export default function ItineraryScreen() {
     );
   }
 
-  // ─── Results screen ──────────────────────────────────────────────────────────────
-  const suitColor = SUITABILITY_COLOR[data!.suitability] || C.textFaint;
+  // ─── Rejection state ──────────────────────────────────────────────────────────────
+  if (data?.rejectionReason) {
+    return (
+      <View style={s.root}>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <View style={s.header}>
+          <TouchableOpacity onPress={() => router.back()} style={s.headerBtn}>
+            <ArrowLeft size={20} color={C.white} strokeWidth={2} />
+          </TouchableOpacity>
+          <Text style={s.headerTitle}>Plan Unavailable</Text>
+          <TouchableOpacity onPress={openFilter} style={s.headerBtn}>
+            <Filter size={20} color={C.white} strokeWidth={2} />
+          </TouchableOpacity>
+        </View>
+        <View style={s.rejectionContainer}>
+          <View style={s.rejectionIcon}>
+            <AlertTriangle size={48} color={C.amber} strokeWidth={1.5} />
+          </View>
+          <Text style={s.rejectionTitle}>Cannot Create This Plan</Text>
+          <Text style={s.rejectionText}>{data.rejectionReason}</Text>
+          {data.minimumSafeDays ? (
+            <View style={s.rejectionDetails}>
+              <Text style={s.rejectionDetail}>
+                Minimum safe duration: {data.minimumSafeDays} days
+              </Text>
+              {data.recommendedDays ? (
+                <Text style={s.rejectionDetail}>
+                  Recommended duration: {data.recommendedDays} days
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+          <TouchableOpacity onPress={openFilter} style={s.retryBtn}>
+            <Text style={s.retryBtnText}>Adjust Preferences</Text>
+          </TouchableOpacity>
+        </View>
 
+        <Modal visible={filterOpen} animationType="slide" transparent onRequestClose={() => setFilterOpen(false)}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.modalOverlay}>
+            <TouchableOpacity style={s.modalBackdrop} onPress={() => setFilterOpen(false)} />
+            <View style={s.modalSheet}>
+              <View style={s.modalHandle} />
+              <View style={s.modalHeader}>
+                <Text style={s.modalTitle}>Your Preferences</Text>
+                <TouchableOpacity onPress={() => setFilterOpen(false)} style={s.modalClose}>
+                  <X size={20} color={C.textSub} strokeWidth={2} />
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={s.modalBody} showsVerticalScrollIndicator={false}>
+                <PrefsForm prefs={draft} onChange={setDraft} />
+              </ScrollView>
+              <View style={s.modalFooter}>
+                <TouchableOpacity onPress={() => setFilterOpen(false)} style={s.modalCancel}>
+                  <Text style={s.modalCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={applyFilter} style={s.modalApply}>
+                  <Filter size={16} color={C.white} strokeWidth={2} />
+                  <Text style={s.modalApplyText}>Apply</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
+      </View>
+    );
+  }
+
+  // ─── Results screen ──────────────────────────────────────────────────────────────
   return (
     <View style={s.root}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
@@ -412,73 +573,34 @@ export default function ItineraryScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Trek Name + Suitability */}
+        {/* Trek Name + Quick Stats */}
         <View style={s.titleSection}>
           <Text style={s.trekName}>{data!.trekName}</Text>
-          <View style={[s.badge, { backgroundColor: suitColor + '20', borderColor: suitColor }]}>
-            <Text style={[s.badgeText, { color: suitColor }]}>{data!.suitability}</Text>
+          <View style={s.quickStats}>
+            <View style={s.quickStat}>
+              <Clock size={14} color={C.textMuted} strokeWidth={2} />
+              <Text style={s.quickStatText}>{data!.totalDays} days</Text>
+            </View>
+            <View style={s.quickStatDivider} />
+            <View style={s.quickStat}>
+              <Mountain size={14} color={C.textMuted} strokeWidth={2} />
+              <Text style={s.quickStatText}>{data!.totalDistance} km</Text>
+            </View>
           </View>
         </View>
 
-        {/* Stats Summary */}
-        <View style={s.statsRow}>
-          <View style={s.statBox}>
-            <Clock size={18} color={C.brand} strokeWidth={2} />
-            <Text style={s.statVal}>{data!.totalDays} days</Text>
-            <Text style={s.statLbl}>Total Duration</Text>
-          </View>
-          <View style={[s.statBox, s.statBoxBorder]}>
-            <Mountain size={18} color={C.blue} strokeWidth={2} />
-            <Text style={[s.statVal, { color: C.blue }]}>{data!.totalDistance} km</Text>
-            <Text style={s.statLbl}>Total Distance</Text>
-          </View>
-        </View>
-
-        {/* Caution Message */}
-        {data!.cautionMessage ? (
-          <View style={s.cautionBox}>
-            <AlertTriangle size={16} color={C.amber} strokeWidth={2} />
-            <Text style={s.cautionText}>{data!.cautionMessage}</Text>
-          </View>
-        ) : null}
-
-        {/* Route Info — full journey */}
-        <View style={s.routeInfoCard}>
-          <View style={s.routeInfoRow}>
-            <MapPin size={14} color={C.brand} strokeWidth={2.5} />
-            <Text style={s.routeInfoLabel}>From</Text>
-            <Text style={s.routeInfoValue}>{data!.origin}</Text>
-          </View>
-          {data!.preTrekSummary ? (
-            <Text style={s.preTrekHint}>→ {data!.preTrekSummary}</Text>
-          ) : data!.origin !== data!.suggestedStart ? (
-            <Text style={s.preTrekHint}>→ Travel to {data!.suggestedStart}</Text>
-          ) : null}
-          <View style={s.routeInfoRow}>
-            <Text style={[s.routeInfoLabel, { marginLeft: 16 }]}>⛰️ Trek</Text>
-            <Text style={s.routeInfoValue}>
-              {data!.suggestedStart === data!.trekEnd
-                ? `${data!.suggestedStart} area`
-                : `${data!.suggestedStart} → ${data!.trekEnd}`}
-            </Text>
-          </View>
-          <View style={s.routeInfoDivider} />
-          <View style={s.routeInfoRow}>
-            <MapPin size={14} color={C.brand} strokeWidth={2.5} />
-            <Text style={s.routeInfoLabel}>End</Text>
-            <Text style={s.routeInfoValue}>{data!.finalDestination}</Text>
-          </View>
-          {data!.postTrekSummary ? (
-            <Text style={s.preTrekHint}>→ {data!.postTrekSummary}</Text>
-          ) : data!.finalDestination !== data!.trekEnd ? (
-            <Text style={s.preTrekHint}>→ Travel from {data!.trekEnd}</Text>
-          ) : null}
+        {/* Route */}
+        <View style={s.routeCard}>
+          <MapPin size={14} color={C.brandLight} strokeWidth={2.5} />
+          <Text style={s.routeText} numberOfLines={1}>
+            {data!.origin}  →  {data!.finalDestination}
+          </Text>
         </View>
 
         {/* Day Cards */}
-        <Text style={s.sectionTitle}>Day-by-Day Plan</Text>
-        {data!.itinerary.map((day, i) => (
-          <DayCard key={i} day={day} isLast={i === data!.itinerary.length - 1} />
+        <Text style={s.sectionTitle}>Trek Plan</Text>
+        {data!.days.map((day, i) => (
+          <DayCard key={i} day={day} />
         ))}
 
         <View style={{ height: 40 }} />
@@ -511,107 +633,6 @@ export default function ItineraryScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
-  );
-}
-
-const ACTIVITY_COLORS: Record<string, string> = {
-  trekking: C.green,
-  travel: C.brandLight,
-  rest: C.amber,
-  mixed: C.purple,
-};
-const ACTIVITY_LABELS: Record<string, string> = {
-  trekking: 'TREK',
-  travel: 'TRAVEL',
-  rest: 'REST',
-  mixed: 'MIXED',
-};
-
-function DayCard({ day, isLast }: { day: ItineraryDay; isLast: boolean }) {
-  const ac = ACTIVITY_COLORS[day.activityType] || C.textFaint;
-  const al = ACTIVITY_LABELS[day.activityType] || 'TREK';
-  const isRest = day.activityType === 'rest';
-  const isTravel = day.activityType === 'travel';
-
-  const stats: { label: string; value: string }[] = [];
-  if (day.distance > 0) stats.push({ label: 'Distance', value: `${day.distance} km` });
-  if (day.elevationGain > 0) stats.push({ label: 'Altitude', value: `+${day.elevationGain} m` });
-  if (day.estimatedHours > 0) stats.push({ label: 'Duration', value: `~${day.estimatedHours} hr${day.estimatedHours > 1 ? 's' : ''}` });
-
-  const cardGlow = { backgroundColor: ac + '18', borderColor: ac + '50' };
-
-  return (
-    <View style={s.dayCard}>
-      <View style={s.dayHeader}>
-        <View style={[s.dayDot, isRest && s.dayDotRest, isTravel && s.dayDotTravel, { backgroundColor: ac }]}>
-          <Text style={s.dayDotText}>{day.day}</Text>
-        </View>
-        {!isLast && <View style={s.dayLine} />}
-      </View>
-
-      <View style={[s.dayContent, cardGlow]}>
-        {/* Top row: route + badge */}
-        <View style={s.dayTopRow}>
-          <View style={s.routeRow}>
-            {isRest ? (
-              <View style={[s.restIconWrap, { backgroundColor: ac + '20' }]}>
-                <CheckCircle size={16} color={ac} strokeWidth={2.5} />
-              </View>
-            ) : (
-              <MapPin size={14} color={ac} strokeWidth={2.5} />
-            )}
-            <Text style={[s.dayTitle, isRest && { color: ac }]} numberOfLines={1}>
-              {isRest ? `${day.from}` : day.from === day.to ? `${day.from}` : `${day.from} → ${day.to}`}
-            </Text>
-          </View>
-          <View style={[s.activityBadge, { backgroundColor: ac + '20', borderColor: ac }]}>
-            <Text style={[s.activityBadgeText, { color: ac }]}>{al}</Text>
-          </View>
-        </View>
-
-        {/* Stats Grid (trekking & mixed days) */}
-        {stats.length > 0 && (
-          <View style={s.statsGrid}>
-            {stats.map((stat, i) => (
-              <View key={i} style={s.statItem}>
-                <View>
-                  <Text style={s.statItemValue}>{stat.value}</Text>
-                  <Text style={s.statItemLabel}>{stat.label}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Checkpoint */}
-        {!isRest && day.checkpoint && !day.checkpoint.toLowerCase().includes('travel from') && (
-          <View style={s.checkpointRow}>
-            <MapPin size={12} color={ac} strokeWidth={2.5} />
-            <Text style={s.checkpointText}>{day.checkpoint}</Text>
-          </View>
-        )}
-
-        {/* Description line (only if no stats shown) */}
-        {stats.length === 0 && !isRest && (
-          <Text style={s.dayDescription}>{day.description}</Text>
-        )}
-
-        {/* Overnight */}
-        {!isRest && !isTravel && (
-          <Text style={s.overnightLabel}>Overnight: {day.to}</Text>
-        )}
-
-        {/* Rest day hint */}
-        {isRest && (
-          <Text style={[s.restHint, { color: ac }]}>Recover & acclimatise · explore the area</Text>
-        )}
-
-        {/* Travel day hint */}
-        {isTravel && (
-          <Text style={[s.travelDesc, { color: ac }]}>{day.description}</Text>
-        )}
-      </View>
     </View>
   );
 }
@@ -716,355 +737,254 @@ const s = StyleSheet.create({
 
   /* Title Section */
   titleSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 12,
+    paddingBottom: 10,
   },
   trekName: {
     color: C.white,
     fontSize: 20,
     fontWeight: '700',
-    flex: 1,
-    marginRight: 12,
+    marginBottom: 8,
   },
-  badge: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-
-  /* Stats */
-  statsRow: {
+  quickStats: {
     flexDirection: 'row',
-    marginHorizontal: 20,
-    backgroundColor: C.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: C.border,
-    marginBottom: 16,
-    overflow: 'hidden',
-  },
-  statBox: {
-    flex: 1,
     alignItems: 'center',
-    paddingVertical: 14,
+    gap: 8,
+  },
+  quickStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
   },
-  statBoxBorder: {
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: C.border,
+  quickStatDivider: {
+    width: 1,
+    height: 12,
+    backgroundColor: C.border,
   },
-  statVal: { color: C.white, fontSize: 14, fontWeight: '700' },
-  statLbl: { color: C.textMuted, fontSize: 11, fontWeight: '500', marginTop: 2 },
-
-  /* Caution */
-  cautionBox: {
-    flexDirection: 'row',
-    gap: 8,
-    marginHorizontal: 20,
-    backgroundColor: 'rgba(245,158,11,0.10)',
-    borderWidth: 1,
-    borderColor: C.amber + '30',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-  },
-  cautionText: {
-    color: C.amber,
+  quickStatText: {
+    color: C.textMuted,
     fontSize: 13,
     fontWeight: '500',
-    lineHeight: 19,
-    flex: 1,
   },
 
-  /* Route Info Card */
-  routeInfoCard: {
-    flexDirection: 'column',
-    marginHorizontal: 20,
-    backgroundColor: C.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: C.border,
-    marginBottom: 16,
-    overflow: 'hidden',
-  },
-  routeInfoRow: {
+  /* Route */
+  routeCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 12,
+    gap: 8,
+    marginHorizontal: 20,
+    backgroundColor: C.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: C.border,
     paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 16,
   },
-  routeInfoDivider: {
-    height: 1,
-    backgroundColor: C.border,
-    marginHorizontal: 12,
-  },
-  routeInfoLabel: {
-    color: C.textMuted,
-    fontSize: 11,
+  routeText: {
+    color: C.textSub,
+    fontSize: 13,
     fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  routeInfoValue: {
-    color: C.white,
-    fontSize: 14,
-    fontWeight: '700',
     flex: 1,
-  },
-  preTrekHint: {
-    color: C.textMuted,
-    fontSize: 12,
-    paddingHorizontal: 12,
-    paddingBottom: 10,
-    marginTop: -4,
-    fontStyle: 'italic',
   },
 
   /* Section Title */
   sectionTitle: {
     color: C.white,
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
     paddingHorizontal: 20,
-    marginBottom: 8,
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 
   /* Day Card */
   dayCard: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginBottom: 6,
-  },
-  dayHeader: {
-    width: 40,
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  dayDot: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: C.brand,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: C.brand,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  dayDotRest: {
-    backgroundColor: C.amber,
-    shadowColor: C.amber,
-  },
-  dayDotTravel: {
-    backgroundColor: C.blue,
-    shadowColor: C.blue,
-  },
-  dayDotText: {
-    color: C.white,
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  dayLine: {
-    width: 2,
-    flex: 1,
-    backgroundColor: C.border,
-    marginTop: 4,
-    minHeight: 12,
-  },
-  dayContent: {
-    flex: 1,
+    marginHorizontal: 20,
+    marginBottom: 10,
     backgroundColor: C.surface,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: C.border,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 8,
+    overflow: 'hidden',
   },
-  dayContentRest: {
-    backgroundColor: 'rgba(245,158,11,0.08)',
-    borderColor: C.amber + '30',
-  },
-  dayContentTravel: {
-    backgroundColor: 'rgba(59,130,246,0.08)',
-    borderColor: C.blue + '30',
-  },
-  routeRow: {
+  dayCardHead: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  dayNumDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayNumText: {
+    color: C.white,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  dayInfo: {
     flex: 1,
   },
-  restIconWrap: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+  dayRoute: {
+    color: C.white,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  dayMeta: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 3,
+  },
+  dayChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  dayChipText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  dayActivities: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  dayNotes: {
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 4,
+  },
+  dayNoteRow: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'flex-start',
+  },
+  dayNoteText: {
+    color: C.amber,
+    fontSize: 11,
+    fontWeight: '500',
+    lineHeight: 16,
+    flex: 1,
+  },
+
+  /* Activity Row */
+  activityRow: {
+    flexDirection: 'row',
+  },
+  activityTimeline: {
+    width: 18,
+    alignItems: 'center',
+    paddingTop: 6,
+  },
+  activityDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  activityLine: {
+    width: 1,
+    flex: 1,
+    marginTop: 2,
+    minHeight: 6,
+  },
+  activityBody: {
+    flex: 1,
+    paddingLeft: 8,
+    paddingBottom: 8,
+  },
+  activityHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 1,
+  },
+  activityLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  activityTime: {
+    color: C.textFaint,
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  activityRoute: {
+    color: C.textMuted,
+    fontSize: 12,
+    marginBottom: 1,
+  },
+  activityDesc: {
+    color: C.textFaint,
+    fontSize: 11,
+    lineHeight: 15,
+  },
+
+  /* Rejection state */
+  rejectionContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 30,
+  },
+  rejectionIcon: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: C.amber + '20',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 20,
   },
-  dayTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  rejectionTitle: {
+    color: C.white,
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 12,
+    textAlign: 'center',
   },
-  dayTitle: {
+  rejectionText: {
+    color: C.textSub,
+    fontSize: 14,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  rejectionDetails: {
+    backgroundColor: C.elevated,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 20,
+    width: '100%',
+  },
+  rejectionDetail: {
+    color: C.textMuted,
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  retryBtn: {
+    backgroundColor: C.brand,
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 16,
+  },
+  retryBtnText: {
     color: C.white,
     fontSize: 15,
     fontWeight: '700',
-    flex: 1,
-    lineHeight: 20,
-  },
-  dayTitleRest: {
-    color: C.amber,
-  },
-  activityBadge: {
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    marginLeft: 8,
-  },
-  activityBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  dayDescription: {
-    color: C.textSub,
-    fontSize: 14,
-    fontWeight: '500',
-    marginTop: 8,
-    lineHeight: 20,
-  },
-  overnightLabel: {
-    color: C.textMuted,
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 8,
-  },
-  restBadge: {
-    backgroundColor: C.amber + '20',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    marginLeft: 8,
-  },
-  restBadgeText: {
-    color: C.amber,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  travelBadge: {
-    backgroundColor: C.blue + '20',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-    marginLeft: 8,
-  },
-  travelBadgeText: {
-    color: C.blue,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1,
-  },
-  travelDesc: {
-    color: C.blue,
-    fontSize: 12,
-    marginTop: 8,
-    lineHeight: 18,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 10,
-  },
-  statItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: C.elevated,
-    borderRadius: 10,
-    padding: 8,
-  },
-  statItemValue: {
-    color: C.white,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  statItemLabel: {
-    color: C.textFaint,
-    fontSize: 9,
-    marginTop: 1,
-  },
-  elevBar: {
-    height: 4,
-    backgroundColor: C.elevated,
-    borderRadius: 2,
-    marginTop: 8,
-    overflow: 'hidden',
-  },
-  elevFill: {
-    height: '100%',
-    backgroundColor: C.brand,
-    borderRadius: 2,
-  },
-  checkpointRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 8,
-  },
-  checkpointText: {
-    color: C.textMuted,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  restStops: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 6,
-  },
-  restStopsText: {
-    color: C.green,
-    fontSize: 12,
-    fontWeight: '600',
-    flex: 1,
-  },
-  restDesc: {
-    color: C.textMuted,
-    fontSize: 13,
-    fontWeight: '500',
-    marginTop: 6,
-    fontStyle: 'italic',
-    lineHeight: 20,
-  },
-  restIconRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 8,
-  },
-  restHint: {
-    color: C.amber,
-    fontSize: 12,
-    fontWeight: '500',
-    marginTop: 4,
   },
 
   /* Form Screen */

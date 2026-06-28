@@ -1,15 +1,26 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-export interface PersonalizedStage {
-  day: number;
+export interface ActivityRecord {
+  type: 'road_travel' | 'flight' | 'trekking' | 'rest' | 'acclimatization' | 'checkpoint_stop' | 'meal_break' | 'recovery_break' | 'sightseeing';
   from: string;
   to: string;
   distance: number;
   elevationGain: number;
-  estimatedHours: number;
-  checkpoint: string;
-  restStop: string;
+  durationHours: number;
+  effortScore: number;
+  description: string;
+}
+
+export interface DayRecord {
+  day: number;
+  activities: ActivityRecord[];
+  totalHours: number;
+  totalDistance: number;
+  totalElevationGain: number;
+  maxAltitude: number;
+  overnightLocation: string;
+  notes: string[];
 }
 
 @Schema({ timestamps: true })
@@ -23,39 +34,63 @@ export class Itinerary extends Document {
   @Prop({ required: true, trim: true })
   trekName!: string;
 
-  @Prop({ required: true, trim: true })
-  region!: string;
-
   @Prop({ required: true })
-  totalDuration!: number;
+  totalDays!: number;
 
   @Prop({ required: true })
   totalDistance!: number;
 
-  @Prop({ required: true, trim: true })
-  difficulty!: string;
+  @Prop({ required: true })
+  totalEffort!: number;
 
   @Prop({ required: true })
   maxAltitude!: number;
 
+  @Prop({ required: true, trim: true })
+  suitability!: string;
+
+  @Prop({ type: [String], default: [] })
+  cautions!: string[];
+
+  @Prop({ type: String, default: null })
+  origin!: string | null;
+
+  @Prop({ type: String, default: null })
+  finalDestination!: string | null;
+
   @Prop({
     type: [{
       day: { type: Number, required: true },
-      from: { type: String, required: true },
-      to: { type: String, required: true },
-      distance: { type: Number, required: true },
-      elevationGain: { type: Number, required: true },
-      estimatedHours: { type: Number, required: true },
-      checkpoint: { type: String, default: '' },
-      restStop: { type: String, default: '' },
+      activities: { type: [{
+        type: { type: String, required: true },
+        from: { type: String, required: true },
+        to: { type: String, required: true },
+        distance: { type: Number, default: 0 },
+        elevationGain: { type: Number, default: 0 },
+        durationHours: { type: Number, default: 0 },
+        effortScore: { type: Number, default: 0 },
+        description: { type: String, default: '' },
+      }], default: [] },
+      totalHours: { type: Number, default: 0 },
+      totalDistance: { type: Number, default: 0 },
+      totalElevationGain: { type: Number, default: 0 },
+      maxAltitude: { type: Number, default: 0 },
+      overnightLocation: { type: String, default: '' },
+      notes: { type: [String], default: [] },
     }],
     default: [],
     _id: false,
   })
-  personalizedStages!: PersonalizedStage[];
+  days!: DayRecord[];
 
   @Prop({ type: String, default: null })
-  notes!: string | null;
+  rejectionReason!: string | null;
+
+  @Prop({ type: Number, default: null })
+  minimumSafeDays!: number | null;
+
+  @Prop({ type: Number, default: null })
+  recommendedDays!: number | null;
 
   @Prop({ type: Date })
   createdAt!: Date;
