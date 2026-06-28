@@ -7,6 +7,10 @@ export interface PersonalizationInput {
   trekkingExperience: 'none' | 'basic' | 'moderate' | 'extensive';
   targetDays?: number;
   healthCondition?: 'none' | 'obesity' | 'cardiovascular' | 'joint' | 'other';
+  age?: number;
+  weight?: number;
+  groupSize?: number;
+  previousTreks?: number;
 }
 
 export interface ItineraryDay {
@@ -42,6 +46,10 @@ export class PersonalizationService {
     const experience = input.trekkingExperience || 'none';
     const targetDays = input.targetDays;
     const health = input.healthCondition || 'none';
+    const age = input.age;
+    const weight = input.weight;
+    const groupSize = input.groupSize;
+    const previousTreks = input.previousTreks;
 
     const isSlow = pace === 'slow';
     const isFast = pace === 'fast';
@@ -56,7 +64,41 @@ export class PersonalizationService {
     const distanceMultiplier = isSlow ? 0.75 : isFast ? 1.15 : 1.0;
     const hoursMultiplier = isSlow ? 0.85 : isFast ? 1.1 : 1.0;
     const healthDistMultiplier = hasHealthIssue ? 0.6 : 1.0;
-    const overallDistMultiplier = distanceMultiplier * healthDistMultiplier;
+
+    let ageMultiplier = 1.0;
+    let ageCaution = '';
+    if (age) {
+      if (age < 18) { ageMultiplier = 0.85; ageCaution = 'You are under 18 — this trek may be very demanding. Trek with an experienced guide.'; }
+      else if (age >= 50 && age < 65) { ageMultiplier = 0.8; ageCaution = 'Given your age (50+), we recommend pacing yourself and taking extra rest.'; }
+      else if (age >= 65) { ageMultiplier = 0.6; ageCaution = 'This trek is very demanding for trekkers aged 65+. Please consult your doctor and consider a shorter/easier route.'; }
+    }
+
+    let weightMultiplier = 1.0;
+    let weightCaution = '';
+    if (weight) {
+      if (weight < 50) { weightMultiplier = 0.9; weightCaution = 'Your weight is below 50kg — ensure you have enough energy reserves for long trekking days.'; }
+      else if (weight >= 90 && weight < 120) { weightMultiplier = 0.85; weightCaution = 'Your weight may add extra strain on joints during long descents. Trek carefully.'; }
+      else if (weight >= 120) { weightMultiplier = 0.65; weightCaution = 'Significant extra weight puts strain on knees and joints. We recommend building fitness beforehand and taking it slow.'; }
+    }
+
+    let groupMultiplier = 1.0;
+    if (groupSize) {
+      if (groupSize >= 5 && groupSize < 10) groupMultiplier = 0.9;
+      else if (groupSize >= 10 && groupSize < 15) groupMultiplier = 0.8;
+      else if (groupSize >= 15) groupMultiplier = 0.7;
+    }
+
+    let derivedExperience = experience;
+    if (previousTreks !== undefined && previousTreks !== null) {
+      if (previousTreks === 0) derivedExperience = 'none';
+      else if (previousTreks <= 3) derivedExperience = 'basic';
+      else if (previousTreks <= 10) derivedExperience = 'moderate';
+      else derivedExperience = 'extensive';
+    }
+    const effectiveIsBeginner = derivedExperience === 'none' || derivedExperience === 'basic';
+    const effectiveIsExperienced = derivedExperience === 'extensive' || derivedExperience === 'moderate';
+
+    const overallDistMultiplier = distanceMultiplier * healthDistMultiplier * ageMultiplier * weightMultiplier * groupMultiplier;
 
     const toPlain = (s: RouteStage): RouteStage => ({
       day: Number(s.day) || 0,
@@ -78,11 +120,14 @@ export class PersonalizationService {
       };
     });
 
-    if (!hasHealthIssue && isFast && !isBeginner) {
+    const needsRestMoreFreq = hasHealthIssue || (age && age >= 50) || (weight && weight >= 120);
+    const restEvery = needsRestMoreFreq ? 1 : isSlow ? 2 : 0;
+
+    if (!hasHealthIssue && isFast && !effectiveIsBeginner) {
       adjustedStages = this.combineSmallStages(adjustedStages);
     }
-    if (isSlow || hasHealthIssue) {
-      adjustedStages = this.insertRestDays(adjustedStages, hasHealthIssue ? 1 : 2);
+    if (isSlow || needsRestMoreFreq) {
+      adjustedStages = this.insertRestDays(adjustedStages, restEvery);
     }
 
     if (targetDays && targetDays < adjustedStages.length) {
@@ -97,7 +142,7 @@ export class PersonalizationService {
         `This trek is rated ${difficulty}, which may be challenging given your current fitness level. We recommend building endurance before attempting.`,
       );
     }
-    if (isBeginner && baseDifficulty >= 3) {
+    if (effectiveIsBeginner && baseDifficulty >= 3) {
       cautionMessages.push(
         'This is a hard trek and may not be suitable for beginners. Consider choosing an easier route or trekking with an experienced guide.',
       );
@@ -107,16 +152,31 @@ export class PersonalizationService {
         `Given your health condition (${health.replace('_', ' ')}), we strongly recommend consulting a doctor before attempting this trek. Extra rest days and reduced daily distances have been factored in.`,
       );
     }
+    if (ageCaution && baseDifficulty >= 2) {
+      cautionMessages.push(ageCaution);
+    }
+    if (weightCaution && baseDifficulty >= 2) {
+      cautionMessages.push(weightCaution);
+    }
+    if (groupSize && groupSize >= 10 && baseDifficulty >= 2) {
+      cautionMessages.push(
+        'Large groups move slower. Ensure proper coordination and allow extra time between points.',
+      );
+    }
     if (isLowFitness && baseDifficulty >= 2) {
       adjustedStages = this.insertRestCheckpoints(adjustedStages);
     }
 
+    const hasMajorConcern = isLowFitness || effectiveIsBeginner || hasHealthIssue ||
+      (age !== undefined && age >= 50) || (weight !== undefined && weight >= 90) ||
+      (groupSize !== undefined && groupSize >= 10);
+
     let suitability: 'Low' | 'Moderate' | 'High' = 'High';
-    if (baseDifficulty >= 3 && (isLowFitness || isBeginner || hasHealthIssue)) {
+    if (baseDifficulty >= 3 && hasMajorConcern) {
       suitability = 'Low';
-    } else if (baseDifficulty >= 3 && !isLowFitness && !isBeginner) {
-      suitability = baseDifficulty === 3 && !isExperienced ? 'Moderate' : 'High';
-    } else if (baseDifficulty >= 2 && (isLowFitness || isBeginner || hasHealthIssue)) {
+    } else if (baseDifficulty >= 3 && !isLowFitness && !effectiveIsBeginner) {
+      suitability = baseDifficulty === 3 && !effectiveIsExperienced ? 'Moderate' : 'High';
+    } else if (baseDifficulty >= 2 && hasMajorConcern) {
       suitability = 'Moderate';
     }
 
@@ -128,7 +188,7 @@ export class PersonalizationService {
       elevationGain: s.elevationGain,
       estimatedHours: s.estimatedHours,
       checkpoint: s.checkpoint,
-      restStops: this.buildRestStops(s, isLowFitness || hasHealthIssue),
+      restStops: this.buildRestStops(s, isLowFitness || hasHealthIssue || (age !== undefined && age >= 50) || (weight !== undefined && weight >= 90)),
     }));
 
     const totalDistance = renumbered.reduce((sum, d) => sum + d.distance, 0);

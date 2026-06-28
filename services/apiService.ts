@@ -665,6 +665,10 @@ export const itineraryApi = {
       trekkingExperience?: string;
       targetDays?: number;
       healthCondition?: string;
+      age?: number;
+      weight?: number;
+      groupSize?: number;
+      previousTreks?: number;
     },
   ): Promise<PersonalizedItinerary | null> => {
     try {
@@ -674,6 +678,10 @@ export const itineraryApi = {
       if (params?.trekkingExperience) query.set('trekkingExperience', params.trekkingExperience);
       if (params?.targetDays) query.set('targetDays', String(params.targetDays));
       if (params?.healthCondition) query.set('healthCondition', params.healthCondition);
+      if (params?.age) query.set('age', String(params.age));
+      if (params?.weight) query.set('weight', String(params.weight));
+      if (params?.groupSize) query.set('groupSize', String(params.groupSize));
+      if (params?.previousTreks) query.set('previousTreks', String(params.previousTreks));
       const qs = query.toString();
       const url = `${API_URL}/treks/${trekId}/itinerary${qs ? `?${qs}` : ''}`;
       const res = await fetch(url);

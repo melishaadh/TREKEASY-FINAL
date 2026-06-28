@@ -66,6 +66,10 @@ export default function ItineraryScreen() {
   const [trekkingExperience, setTrekkingExperience] = useState<'none' | 'basic' | 'moderate' | 'extensive'>('none');
   const [targetDays, setTargetDays] = useState('');
   const [healthCondition, setHealthCondition] = useState<'none' | 'obesity' | 'cardiovascular' | 'joint' | 'other'>('none');
+  const [age, setAge] = useState('');
+  const [weight, setWeight] = useState('');
+  const [groupSize, setGroupSize] = useState('');
+  const [previousTreks, setPreviousTreks] = useState('');
   const [showPrefs, setShowPrefs] = useState(false);
 
   const fetchItinerary = useCallback(async () => {
@@ -78,6 +82,10 @@ export default function ItineraryScreen() {
         trekkingExperience,
         targetDays: targetDays ? parseInt(targetDays, 10) : undefined,
         healthCondition,
+        age: age ? parseInt(age, 10) : undefined,
+        weight: weight ? parseInt(weight, 10) : undefined,
+        groupSize: groupSize ? parseInt(groupSize, 10) : undefined,
+        previousTreks: previousTreks ? parseInt(previousTreks, 10) : undefined,
       });
       if (result) {
         setData(result);
@@ -89,7 +97,7 @@ export default function ItineraryScreen() {
     } finally {
       setLoading(false);
     }
-  }, [id, pace, fitnessLevel, trekkingExperience, targetDays, healthCondition]);
+  }, [id, pace, fitnessLevel, trekkingExperience, targetDays, healthCondition, age, weight, groupSize, previousTreks]);
 
   useEffect(() => {
     fetchItinerary();
@@ -138,6 +146,26 @@ export default function ItineraryScreen() {
             <Selector label="Fitness" options={FITNESS_OPTIONS} value={fitnessLevel} onChange={setFitnessLevel} />
             <Selector label="Experience" options={EXPERIENCE_OPTIONS} value={trekkingExperience} onChange={setTrekkingExperience} />
             <Selector label="Health" options={HEALTH_OPTIONS} value={healthCondition} onChange={setHealthCondition} />
+            <View style={ss.row}>
+              <View style={ss.halfField}>
+                <Text style={ss.selectorLabel}>Age</Text>
+                <TextInput style={s.targetInput} value={age} onChangeText={setAge} keyboardType="number-pad" placeholder="e.g. 30" placeholderTextColor={C.textFaint} />
+              </View>
+              <View style={ss.halfField}>
+                <Text style={ss.selectorLabel}>Weight (kg)</Text>
+                <TextInput style={s.targetInput} value={weight} onChangeText={setWeight} keyboardType="number-pad" placeholder="e.g. 70" placeholderTextColor={C.textFaint} />
+              </View>
+            </View>
+            <View style={ss.row}>
+              <View style={ss.halfField}>
+                <Text style={ss.selectorLabel}>Group Size</Text>
+                <TextInput style={s.targetInput} value={groupSize} onChangeText={setGroupSize} keyboardType="number-pad" placeholder="e.g. 4" placeholderTextColor={C.textFaint} />
+              </View>
+              <View style={ss.halfField}>
+                <Text style={ss.selectorLabel}>Prev Treks Done</Text>
+                <TextInput style={s.targetInput} value={previousTreks} onChangeText={setPreviousTreks} keyboardType="number-pad" placeholder="e.g. 2" placeholderTextColor={C.textFaint} />
+              </View>
+            </View>
             <View style={ss.selectorWrap}>
               <Text style={ss.selectorLabel}>Target Days (optional)</Text>
               <TextInput
@@ -276,6 +304,8 @@ const ss = StyleSheet.create({
   },
   selectorOptText: { color: C.textMuted, fontSize: 13, fontWeight: '500' },
   selectorOptTextActive: { color: C.brandLight, fontWeight: '700' },
+  row: { flexDirection: 'row', gap: 10, marginBottom: 14 },
+  halfField: { flex: 1 },
   loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
   loadingText: { color: C.textFaint, fontSize: 12 },
 });
