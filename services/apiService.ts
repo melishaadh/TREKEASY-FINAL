@@ -659,13 +659,21 @@ export interface PersonalizedItinerary {
 export const itineraryApi = {
   getForTrek: async (
     trekId: string,
-    params?: { pace?: string; fitnessLevel?: string; trekkingExperience?: string },
+    params?: {
+      pace?: string;
+      fitnessLevel?: string;
+      trekkingExperience?: string;
+      targetDays?: number;
+      healthCondition?: string;
+    },
   ): Promise<PersonalizedItinerary | null> => {
     try {
       const query = new URLSearchParams();
       if (params?.pace) query.set('pace', params.pace);
       if (params?.fitnessLevel) query.set('fitnessLevel', params.fitnessLevel);
       if (params?.trekkingExperience) query.set('trekkingExperience', params.trekkingExperience);
+      if (params?.targetDays) query.set('targetDays', String(params.targetDays));
+      if (params?.healthCondition) query.set('healthCondition', params.healthCondition);
       const qs = query.toString();
       const url = `${API_URL}/treks/${trekId}/itinerary${qs ? `?${qs}` : ''}`;
       const res = await fetch(url);

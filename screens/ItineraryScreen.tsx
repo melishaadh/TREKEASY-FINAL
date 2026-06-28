@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,11 @@ import {
   ActivityIndicator,
   StyleSheet,
   StatusBar,
+  TextInput,
 } from 'react-native';
-import { ArrowLeft, Mountain, Clock, MapPin, AlertTriangle, CheckCircle } from 'lucide-react-native';
+import {
+  ArrowLeft, Mountain, Clock, MapPin, AlertTriangle, CheckCircle, Settings, ChevronDown, ChevronUp,
+} from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { itineraryApi, PersonalizedItinerary, ItineraryDay } from '@/services/apiService';
 import { C, DIFFICULTY_COLOR } from '@/constants/theme';
@@ -19,30 +22,80 @@ const SUITABILITY_COLOR: Record<string, string> = {
   High: C.green,
 };
 
+const PACE_OPTIONS = ['slow', 'normal', 'fast'] as const;
+const FITNESS_OPTIONS = ['beginner', 'intermediate', 'advanced', 'expert'] as const;
+const EXPERIENCE_OPTIONS = ['none', 'basic', 'moderate', 'extensive'] as const;
+const HEALTH_OPTIONS = ['none', 'obesity', 'cardiovascular', 'joint', 'other'] as const;
+
+function Selector<T extends string>({
+  label, options, value, onChange,
+}: {
+  label: string;
+  options: readonly T[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <View style={ss.selectorWrap}>
+      <Text style={ss.selectorLabel}>{label}</Text>
+      <View style={ss.selectorRow}>
+        {options.map(o => (
+          <TouchableOpacity
+            key={o}
+            onPress={() => onChange(o)}
+            style={[ss.selectorOpt, value === o && ss.selectorOptActive]}
+          >
+            <Text style={[ss.selectorOptText, value === o && ss.selectorOptTextActive]}>
+              {o.charAt(0).toUpperCase() + o.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 export default function ItineraryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [data, setData] = useState<PersonalizedItinerary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const result = await itineraryApi.getForTrek(id);
-        if (result) {
-          setData(result);
-        } else {
-          setError('Could not load itinerary');
-        }
-      } catch {
-        setError('Failed to load itinerary');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [id]);
+  const [pace, setPace] = useState<'slow' | 'normal' | 'fast'>('normal');
+  const [fitnessLevel, setFitnessLevel] = useState<'beginner' | 'intermediate' | 'advanced' | 'expert'>('beginner');
+  const [trekkingExperience, setTrekkingExperience] = useState<'none' | 'basic' | 'moderate' | 'extensive'>('none');
+  const [targetDays, setTargetDays] = useState('');
+  const [healthCondition, setHealthCondition] = useState<'none' | 'obesity' | 'cardiovascular' | 'joint' | 'other'>('none');
+  const [showPrefs, setShowPrefs] = useState(false);
 
-  if (loading) {
+  const fetchItinerary = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const result = await itineraryApi.getForTrek(id, {
+        pace,
+        fitnessLevel,
+        trekkingExperience,
+        targetDays: targetDays ? parseInt(targetDays, 10) : undefined,
+        healthCondition,
+      });
+      if (result) {
+        setData(result);
+      } else {
+        setError('Could not load itinerary');
+      }
+    } catch {
+      setError('Failed to load itinerary');
+    } finally {
+      setLoading(false);
+    }
+  }, [id, pace, fitnessLevel, trekkingExperience, targetDays, healthCondition]);
+
+  useEffect(() => {
+    fetchItinerary();
+  }, [fetchItinerary]);
+
+  if (loading && !data) {
     return (
       <View style={s.center}>
         <ActivityIndicator size="large" color={C.brand} />
@@ -50,7 +103,7 @@ export default function ItineraryScreen() {
     );
   }
 
-  if (error || !data) {
+  if (error && !data) {
     return (
       <View style={s.center}>
         <Text style={s.errorText}>{error || 'No itinerary found'}</Text>
@@ -61,7 +114,7 @@ export default function ItineraryScreen() {
     );
   }
 
-  const suitColor = SUITABILITY_COLOR[data.suitability] || C.textFaint;
+  const suitColor = SUITABILITY_COLOR[data!.suitability] || C.textFaint;
 
   return (
     <View style={s.root}>
@@ -73,14 +126,43 @@ export default function ItineraryScreen() {
             <ArrowLeft size={20} color={C.white} strokeWidth={2} />
           </TouchableOpacity>
           <Text style={s.headerTitle}>Personalized Itinerary</Text>
-          <View style={{ width: 40 }} />
+          <TouchableOpacity onPress={() => setShowPrefs(v => !v)} style={s.headerBtn}>
+            <Settings size={20} color={showPrefs ? C.brandLight : C.white} strokeWidth={2} />
+          </TouchableOpacity>
         </View>
+
+        {/* Preferences Panel */}
+        {showPrefs && (
+          <View style={s.prefsPanel}>
+            <Selector label="Pace" options={PACE_OPTIONS} value={pace} onChange={setPace} />
+            <Selector label="Fitness" options={FITNESS_OPTIONS} value={fitnessLevel} onChange={setFitnessLevel} />
+            <Selector label="Experience" options={EXPERIENCE_OPTIONS} value={trekkingExperience} onChange={setTrekkingExperience} />
+            <Selector label="Health" options={HEALTH_OPTIONS} value={healthCondition} onChange={setHealthCondition} />
+            <View style={ss.selectorWrap}>
+              <Text style={ss.selectorLabel}>Target Days (optional)</Text>
+              <TextInput
+                style={s.targetInput}
+                value={targetDays}
+                onChangeText={setTargetDays}
+                keyboardType="number-pad"
+                placeholder="e.g. 10"
+                placeholderTextColor={C.textFaint}
+              />
+            </View>
+            {loading && (
+              <View style={ss.loadingRow}>
+                <ActivityIndicator size="small" color={C.brand} />
+                <Text style={ss.loadingText}>Regenerating...</Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Trek Name + Suitability */}
         <View style={s.titleSection}>
-          <Text style={s.trekName}>{data.trekName}</Text>
+          <Text style={s.trekName}>{data!.trekName}</Text>
           <View style={[s.badge, { backgroundColor: suitColor + '20', borderColor: suitColor }]}>
-            <Text style={[s.badgeText, { color: suitColor }]}>{data.suitability}</Text>
+            <Text style={[s.badgeText, { color: suitColor }]}>{data!.suitability}</Text>
           </View>
         </View>
 
@@ -88,28 +170,28 @@ export default function ItineraryScreen() {
         <View style={s.statsRow}>
           <View style={s.statBox}>
             <Clock size={18} color={C.brand} strokeWidth={2} />
-            <Text style={s.statVal}>{data.totalDays} days</Text>
+            <Text style={s.statVal}>{data!.totalDays} days</Text>
             <Text style={s.statLbl}>Total Duration</Text>
           </View>
           <View style={[s.statBox, s.statBoxBorder]}>
             <Mountain size={18} color={C.blue} strokeWidth={2} />
-            <Text style={[s.statVal, { color: C.blue }]}>{data.totalDistance} km</Text>
+            <Text style={[s.statVal, { color: C.blue }]}>{data!.totalDistance} km</Text>
             <Text style={s.statLbl}>Total Distance</Text>
           </View>
         </View>
 
         {/* Caution Message */}
-        {data.cautionMessage ? (
+        {data!.cautionMessage ? (
           <View style={s.cautionBox}>
             <AlertTriangle size={16} color={C.amber} strokeWidth={2} />
-            <Text style={s.cautionText}>{data.cautionMessage}</Text>
+            <Text style={s.cautionText}>{data!.cautionMessage}</Text>
           </View>
         ) : null}
 
         {/* Day Cards */}
         <Text style={s.sectionTitle}>Day-by-Day Plan</Text>
-        {data.itinerary.map((day, i) => (
-          <DayCard key={i} day={day} isLast={i === data.itinerary.length - 1} />
+        {data!.itinerary.map((day, i) => (
+          <DayCard key={i} day={day} isLast={i === data!.itinerary.length - 1} />
         ))}
 
         <View style={{ height: 40 }} />
@@ -176,6 +258,28 @@ function DayCard({ day, isLast }: { day: ItineraryDay; isLast: boolean }) {
   );
 }
 
+const ss = StyleSheet.create({
+  selectorWrap: { marginBottom: 14 },
+  selectorLabel: { color: C.textSub, fontSize: 12, fontWeight: '600', marginBottom: 6, textTransform: 'uppercase' },
+  selectorRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
+  selectorOpt: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: C.elevated,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  selectorOptActive: {
+    backgroundColor: C.brandDim,
+    borderColor: C.brand,
+  },
+  selectorOptText: { color: C.textMuted, fontSize: 13, fontWeight: '500' },
+  selectorOptTextActive: { color: C.brandLight, fontWeight: '700' },
+  loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
+  loadingText: { color: C.textFaint, fontSize: 12 },
+});
+
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg },
   center: {
@@ -215,6 +319,28 @@ const s = StyleSheet.create({
     color: C.white,
     fontSize: 16,
     fontWeight: '700',
+  },
+
+  /* Prefs */
+  prefsPanel: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 8,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 16,
+    padding: 16,
+  },
+  targetInput: {
+    backgroundColor: C.elevated,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    color: C.white,
+    fontSize: 14,
   },
 
   /* Title Section */

@@ -60,12 +60,16 @@ export class TreksController {
     @Query('pace') pace?: string,
     @Query('fitnessLevel') fitnessLevel?: string,
     @Query('trekkingExperience') trekkingExperience?: string,
+    @Query('targetDays') targetDays?: string,
+    @Query('healthCondition') healthCondition?: string,
   ) {
     const trek = await this.treksService.getById(id);
     const input: PersonalizationInput = {
       pace: (pace as PersonalizationInput['pace']) || 'normal',
       fitnessLevel: (fitnessLevel as PersonalizationInput['fitnessLevel']) || 'beginner',
       trekkingExperience: (trekkingExperience as PersonalizationInput['trekkingExperience']) || 'none',
+      targetDays: targetDays ? parseInt(targetDays, 10) : undefined,
+      healthCondition: (healthCondition as PersonalizationInput['healthCondition']) || 'none',
     };
     return this.personalizationService.generate(
       trek.name,
