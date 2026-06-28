@@ -97,10 +97,10 @@ const s = StyleSheet.create({
     marginBottom: 14,
   },
   label: {
-    color: C.textFaint,
-    fontSize: 11,
+    color: C.white,
+    fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 1.5,
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
   valueText: {

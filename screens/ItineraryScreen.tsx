@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import {
-  ArrowLeft, Mountain, Clock, MapPin, AlertTriangle, CheckCircle, Filter, Sunrise, X,
+  ArrowLeft, Mountain, Clock, Map, MapPin, AlertTriangle, CheckCircle, Filter, X,
 } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { itineraryApi, PersonalizedItinerary, ItineraryDay } from '@/services/apiService';
@@ -28,7 +28,6 @@ const SUITABILITY_COLOR: Record<string, string> = {
 const PACE_OPTIONS = ['slow', 'normal', 'fast'] as const;
 const FITNESS_OPTIONS = ['beginner', 'intermediate', 'advanced', 'expert'] as const;
 const EXPERIENCE_OPTIONS = ['none', 'basic', 'moderate', 'extensive'] as const;
-const HEALTH_OPTIONS = ['none', 'obesity', 'cardiovascular', 'joint', 'other'] as const;
 
 const PREFS_KEY = 'trekeasy_itinerary_prefs';
 
@@ -50,9 +49,9 @@ type ItineraryPrefs = {
   pace: 'slow' | 'normal' | 'fast';
   fitnessLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   trekkingExperience: 'none' | 'basic' | 'moderate' | 'extensive';
-  healthCondition: 'none' | 'obesity' | 'cardiovascular' | 'joint' | 'other';
   targetDays: string;
   startLocation: string;
+  finalDestination: string;
   age: string;
   weight: string;
   groupSize: string;
@@ -60,16 +59,17 @@ type ItineraryPrefs = {
 };
 
 function Selector<T extends string>({
-  label, options, value, onChange,
+  label, options, value, onChange, required,
 }: {
   label: string;
   options: readonly T[];
   value: T;
   onChange: (v: T) => void;
+  required?: boolean;
 }) {
   return (
     <View style={ss.selectorWrap}>
-      <Text style={ss.selectorLabel}>{label}</Text>
+      <Text style={ss.selectorLabel}>{label}{required ? <Text style={{color: C.red}}> *</Text> : null}</Text>
       <View style={ss.selectorRow}>
         {options.map(o => (
           <TouchableOpacity
@@ -87,12 +87,41 @@ function Selector<T extends string>({
   );
 }
 
-function PrefsForm({ prefs, onChange }: { prefs: ItineraryPrefs; onChange: (p: ItineraryPrefs) => void }) {
+function PrefsForm({ prefs, onChange, standardDuration }: { prefs: ItineraryPrefs; onChange: (p: ItineraryPrefs) => void; standardDuration?: number | null }) {
   const set = (partial: Partial<ItineraryPrefs>) => onChange({ ...prefs, ...partial });
+  const [geoLoading, setGeoLoading] = useState(false);
+  const detectLocation = async () => {
+    if (!navigator.geolocation) return;
+    setGeoLoading(true);
+    try {
+      const pos = await new Promise<GeolocationPosition>((res, rej) =>
+        navigator.geolocation.getCurrentPosition(res, rej, { timeout: 10000 })
+      );
+      const { latitude, longitude } = pos.coords;
+      const resp = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=10`,
+        { headers: { 'User-Agent': 'TrekeasyApp/1.0' } }
+      );
+      const geo = await resp.json();
+      const city = geo?.address?.city || geo?.address?.town || geo?.address?.village || geo?.address?.county || `${latitude.toFixed(2)}°N, ${longitude.toFixed(2)}°E`;
+      set({ startLocation: city });
+    } catch {
+      set({ startLocation: 'Location unavailable' });
+    } finally {
+      setGeoLoading(false);
+    }
+  };
   return (
     <>
       <View style={ss.selectorWrap}>
-        <Text style={ss.selectorLabel}>Starting Point</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text style={ss.selectorLabel}>From (Your Location) <Text style={{color: C.red}}>*</Text></Text>
+          <TouchableOpacity onPress={detectLocation} disabled={geoLoading}>
+            <Text style={{ color: C.brandLight, fontSize: 12, fontWeight: '600' }}>
+              {geoLoading ? 'Detecting…' : '📍 Detect'}
+            </Text>
+          </TouchableOpacity>
+        </View>
         <TextInput
           style={s.targetInput}
           value={prefs.startLocation}
@@ -101,10 +130,19 @@ function PrefsForm({ prefs, onChange }: { prefs: ItineraryPrefs; onChange: (p: I
           placeholderTextColor={C.textFaint}
         />
       </View>
-      <Selector label="Pace" options={PACE_OPTIONS} value={prefs.pace} onChange={v => set({ pace: v })} />
-      <Selector label="Fitness" options={FITNESS_OPTIONS} value={prefs.fitnessLevel} onChange={v => set({ fitnessLevel: v })} />
-      <Selector label="Experience" options={EXPERIENCE_OPTIONS} value={prefs.trekkingExperience} onChange={v => set({ trekkingExperience: v })} />
-      <Selector label="Health" options={HEALTH_OPTIONS} value={prefs.healthCondition} onChange={v => set({ healthCondition: v })} />
+      <View style={ss.selectorWrap}>
+        <Text style={ss.selectorLabel}>Final Destination</Text>
+        <TextInput
+          style={s.targetInput}
+          value={prefs.finalDestination}
+          onChangeText={v => set({ finalDestination: v })}
+          placeholder="Leave blank to return to starting point"
+          placeholderTextColor={C.textFaint}
+        />
+      </View>
+      <Selector label="Pace" options={PACE_OPTIONS} value={prefs.pace} onChange={v => set({ pace: v })} required />
+      <Selector label="Fitness" options={FITNESS_OPTIONS} value={prefs.fitnessLevel} onChange={v => set({ fitnessLevel: v })} required />
+      <Selector label="Experience" options={EXPERIENCE_OPTIONS} value={prefs.trekkingExperience} onChange={v => set({ trekkingExperience: v })} required />
       <View style={ss.row}>
         <View style={ss.halfField}>
           <Text style={ss.selectorLabel}>Age</Text>
@@ -126,13 +164,13 @@ function PrefsForm({ prefs, onChange }: { prefs: ItineraryPrefs; onChange: (p: I
         </View>
       </View>
       <View style={ss.selectorWrap}>
-        <Text style={ss.selectorLabel}>Target Duration (optional)</Text>
+        <Text style={ss.selectorLabel}>Target Duration</Text>
         <TextInput
           style={s.targetInput}
           value={prefs.targetDays}
           onChangeText={v => set({ targetDays: v })}
           keyboardType="number-pad"
-          placeholder="e.g. 10"
+          placeholder={standardDuration ? `e.g. ${standardDuration} (default: standard ${standardDuration} days)` : "e.g. 10"}
           placeholderTextColor={C.textFaint}
         />
       </View>
@@ -141,11 +179,14 @@ function PrefsForm({ prefs, onChange }: { prefs: ItineraryPrefs; onChange: (p: I
 }
 
 export default function ItineraryScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, duration: urlDuration } = useLocalSearchParams<{ id: string; duration?: string }>();
+  const standardDuration = urlDuration ? parseInt(urlDuration, 10) : null;
+
   const [data, setData] = useState<PersonalizedItinerary | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
+  const [screenState, setScreenState] = useState<'form' | 'loading' | 'results'>('form');
 
   const saved = loadPrefs();
   const [pace, setPace] = useState<'slow' | 'normal' | 'fast'>((saved.pace as any) || 'normal');
@@ -153,19 +194,19 @@ export default function ItineraryScreen() {
   const [trekkingExperience, setTrekkingExperience] = useState<'none' | 'basic' | 'moderate' | 'extensive'>((saved.trekkingExperience as any) || 'none');
   const [targetDays, setTargetDays] = useState(saved.targetDays || '');
   const [startLocation, setStartLocation] = useState(saved.startLocation || '');
-  const [healthCondition, setHealthCondition] = useState<'none' | 'obesity' | 'cardiovascular' | 'joint' | 'other'>((saved.healthCondition as any) || 'none');
+  const [finalDestination, setFinalDestination] = useState(saved.finalDestination || '');
   const [age, setAge] = useState(saved.age || '');
   const [weight, setWeight] = useState(saved.weight || '');
   const [groupSize, setGroupSize] = useState(saved.groupSize || '');
   const [previousTreks, setPreviousTreks] = useState(saved.previousTreks || '');
 
   const [draft, setDraft] = useState<ItineraryPrefs>({
-    pace, fitnessLevel, trekkingExperience, healthCondition,
-    targetDays, startLocation, age, weight, groupSize, previousTreks,
+    pace, fitnessLevel, trekkingExperience,
+    targetDays, startLocation, finalDestination, age, weight, groupSize, previousTreks,
   });
 
   const openFilter = () => {
-    setDraft({ pace, fitnessLevel, trekkingExperience, healthCondition, targetDays, startLocation, age, weight, groupSize, previousTreks });
+    setDraft({ pace, fitnessLevel, trekkingExperience, targetDays, startLocation, finalDestination, age, weight, groupSize, previousTreks });
     setFilterOpen(true);
   };
 
@@ -173,57 +214,125 @@ export default function ItineraryScreen() {
     setPace(draft.pace);
     setFitnessLevel(draft.fitnessLevel);
     setTrekkingExperience(draft.trekkingExperience);
-    setHealthCondition(draft.healthCondition);
     setTargetDays(draft.targetDays);
     setStartLocation(draft.startLocation);
+    setFinalDestination(draft.finalDestination);
     setAge(draft.age);
     setWeight(draft.weight);
     setGroupSize(draft.groupSize);
     setPreviousTreks(draft.previousTreks);
     savePrefs({ ...draft });
     setFilterOpen(false);
+    doGenerate(draft);
   };
 
-  const fetchItinerary = useCallback(async () => {
+  const doGenerate = async (prefs: ItineraryPrefs) => {
     setLoading(true);
     setError('');
+    setScreenState('loading');
     try {
       const result = await itineraryApi.getForTrek(id, {
-        pace,
-        fitnessLevel,
-        trekkingExperience,
-        targetDays: targetDays ? parseInt(targetDays, 10) : undefined,
-        healthCondition,
-        age: age ? parseInt(age, 10) : undefined,
-        weight: weight ? parseInt(weight, 10) : undefined,
-        groupSize: groupSize ? parseInt(groupSize, 10) : undefined,
-        previousTreks: previousTreks ? parseInt(previousTreks, 10) : undefined,
-        startLocation: startLocation || undefined,
+        pace: prefs.pace,
+        fitnessLevel: prefs.fitnessLevel,
+        trekkingExperience: prefs.trekkingExperience,
+        targetDays: prefs.targetDays ? parseInt(prefs.targetDays, 10) : undefined,
+        age: prefs.age ? parseInt(prefs.age, 10) : undefined,
+        weight: prefs.weight ? parseInt(prefs.weight, 10) : undefined,
+        groupSize: prefs.groupSize ? parseInt(prefs.groupSize, 10) : undefined,
+        previousTreks: prefs.previousTreks ? parseInt(prefs.previousTreks, 10) : undefined,
+        startLocation: prefs.startLocation || undefined,
+        finalDestination: prefs.finalDestination || prefs.startLocation || undefined,
       });
       if (result) {
         setData(result);
+        setScreenState('results');
       } else {
         setError('Could not load itinerary');
+        setScreenState('form');
       }
     } catch {
       setError('Failed to load itinerary');
+      setScreenState('form');
     } finally {
       setLoading(false);
     }
-  }, [id, pace, fitnessLevel, trekkingExperience, targetDays, startLocation, healthCondition, age, weight, groupSize, previousTreks]);
+  };
 
-  useEffect(() => {
-    fetchItinerary();
-  }, [fetchItinerary]);
+  const handleGenerate = () => {
+    if (!draft.startLocation.trim()) {
+      setError('Please enter your starting location');
+      return;
+    }
+    setError('');
+    savePrefs({ ...draft });
+    doGenerate(draft);
+  };
 
-  if (loading && !data) {
+  // ─── Form screen ────────────────────────────────────────────────────────────────
+  if (screenState === 'form') {
     return (
-      <View style={s.center}>
-        <ActivityIndicator size="large" color={C.brand} />
+      <View style={s.root}>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <View style={s.header}>
+            <TouchableOpacity onPress={() => router.back()} style={s.headerBtn}>
+              <ArrowLeft size={20} color={C.white} strokeWidth={2} />
+            </TouchableOpacity>
+            <Text style={s.headerTitle}>Plan Your Trek</Text>
+            <View style={{ width: 40 }} />
+          </View>
+
+          <View style={s.formIntro}>
+            <Text style={s.formIntroTitle}>Customize Your Journey</Text>
+            <Text style={s.formIntroSub}>
+              Tell us about your trip to get a personalized itinerary.
+              {standardDuration ? ` The standard trek is ${standardDuration} days.` : ''}
+            </Text>
+          </View>
+
+          <View style={s.formBody}>
+            <PrefsForm prefs={draft} onChange={setDraft} standardDuration={standardDuration} />
+
+            {error ? (
+              <View style={s.formError}>
+                <AlertTriangle size={14} color={C.red} strokeWidth={2} />
+                <Text style={s.formErrorText}>{error}</Text>
+              </View>
+            ) : null}
+
+            <TouchableOpacity
+              onPress={handleGenerate}
+              disabled={loading}
+              style={[s.generateBtn, loading && s.generateBtnDisabled]}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color={C.white} />
+              ) : (
+                <>
+                  <Map size={18} color={C.white} strokeWidth={2} />
+                  <Text style={s.generateBtnText}>Generate Itinerary</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
       </View>
     );
   }
 
+  // ─── Loading screen ──────────────────────────────────────────────────────────────
+  if (screenState === 'loading') {
+    return (
+      <View style={s.center}>
+        <ActivityIndicator size="large" color={C.brand} />
+        <Text style={s.loadingText}>Creating your personalized itinerary…</Text>
+      </View>
+    );
+  }
+
+  // ─── Error state (after having data) ─────────────────────────────────────────────
   if (error && !data) {
     return (
       <View style={s.center}>
@@ -235,6 +344,7 @@ export default function ItineraryScreen() {
     );
   }
 
+  // ─── Results screen ──────────────────────────────────────────────────────────────
   const suitColor = SUITABILITY_COLOR[data!.suitability] || C.textFaint;
 
   return (
@@ -282,19 +392,37 @@ export default function ItineraryScreen() {
           </View>
         ) : null}
 
-        {/* Route Info */}
+        {/* Route Info — full journey */}
         <View style={s.routeInfoCard}>
           <View style={s.routeInfoRow}>
             <MapPin size={14} color={C.brand} strokeWidth={2.5} />
-            <Text style={s.routeInfoLabel}>Starts at</Text>
-            <Text style={s.routeInfoValue}>{data!.itinerary[0].from}</Text>
+            <Text style={s.routeInfoLabel}>From</Text>
+            <Text style={s.routeInfoValue}>{data!.origin}</Text>
+          </View>
+          {data!.preTrekSummary ? (
+            <Text style={s.preTrekHint}>→ {data!.preTrekSummary}</Text>
+          ) : data!.origin !== data!.suggestedStart ? (
+            <Text style={s.preTrekHint}>→ Travel to {data!.suggestedStart}</Text>
+          ) : null}
+          <View style={s.routeInfoRow}>
+            <Text style={[s.routeInfoLabel, { marginLeft: 16 }]}>⛰️ Trek</Text>
+            <Text style={s.routeInfoValue}>
+              {data!.suggestedStart === data!.trekEnd
+                ? `${data!.suggestedStart} area`
+                : `${data!.suggestedStart} → ${data!.trekEnd}`}
+            </Text>
           </View>
           <View style={s.routeInfoDivider} />
           <View style={s.routeInfoRow}>
-            <MapPin size={14} color={C.blue} strokeWidth={2.5} />
-            <Text style={s.routeInfoLabel}>Ends at</Text>
-            <Text style={s.routeInfoValue}>{data!.itinerary[data!.itinerary.length - 1].to}</Text>
+            <MapPin size={14} color={C.brand} strokeWidth={2.5} />
+            <Text style={s.routeInfoLabel}>End</Text>
+            <Text style={s.routeInfoValue}>{data!.finalDestination}</Text>
           </View>
+          {data!.postTrekSummary ? (
+            <Text style={s.preTrekHint}>→ {data!.postTrekSummary}</Text>
+          ) : data!.finalDestination !== data!.trekEnd ? (
+            <Text style={s.preTrekHint}>→ Travel from {data!.trekEnd}</Text>
+          ) : null}
         </View>
 
         {/* Day Cards */}
@@ -337,124 +465,101 @@ export default function ItineraryScreen() {
   );
 }
 
-function DayCard({ day, isLast }: { day: ItineraryDay; isLast: boolean }) {
-  const isTravel = day.checkpoint?.startsWith('Travel from');
-  const isRest = !isTravel && day.distance === 0 && day.estimatedHours === 0;
+const ACTIVITY_COLORS: Record<string, string> = {
+  trekking: C.green,
+  travel: C.brandLight,
+  rest: C.amber,
+  mixed: C.purple,
+};
+const ACTIVITY_LABELS: Record<string, string> = {
+  trekking: 'TREK',
+  travel: 'TRAVEL',
+  rest: 'REST',
+  mixed: 'MIXED',
+};
 
-  if (isTravel) {
-    return (
-      <View style={s.dayCard}>
-        <View style={s.dayHeader}>
-          <View style={[s.dayDot, s.dayDotTravel]}>
-            <Text style={s.dayDotText}>{day.day}</Text>
-          </View>
-          {!isLast && <View style={s.dayLine} />}
-        </View>
-        <View style={[s.dayContent, s.dayContentTravel]}>
-          <View style={s.dayTopRow}>
-            <View style={s.routeRow}>
-              <MapPin size={14} color={C.blue} strokeWidth={2.5} />
-              <Text style={[s.dayTitle, { color: C.blue }]} numberOfLines={2}>
-                {day.from}  →  {day.to}
-              </Text>
-            </View>
-            <View style={s.travelBadge}>
-              <Text style={s.travelBadgeText}>TRAVEL</Text>
-            </View>
-          </View>
-          <Text style={s.travelDesc}>{day.checkpoint}</Text>
-        </View>
-      </View>
-    );
-  }
+function DayCard({ day, isLast }: { day: ItineraryDay; isLast: boolean }) {
+  const ac = ACTIVITY_COLORS[day.activityType] || C.textFaint;
+  const al = ACTIVITY_LABELS[day.activityType] || 'TREK';
+  const isRest = day.activityType === 'rest';
+  const isTravel = day.activityType === 'travel';
+
+  const stats: { label: string; value: string }[] = [];
+  if (day.distance > 0) stats.push({ label: 'Distance', value: `${day.distance} km` });
+  if (day.elevationGain > 0) stats.push({ label: 'Altitude', value: `+${day.elevationGain} m` });
+  if (day.estimatedHours > 0) stats.push({ label: 'Duration', value: `~${day.estimatedHours} hr${day.estimatedHours > 1 ? 's' : ''}` });
+
+  const cardGlow = { backgroundColor: ac + '18', borderColor: ac + '50' };
 
   return (
     <View style={s.dayCard}>
       <View style={s.dayHeader}>
-        <View style={[s.dayDot, isRest && s.dayDotRest]}>
+        <View style={[s.dayDot, isRest && s.dayDotRest, isTravel && s.dayDotTravel, { backgroundColor: ac }]}>
           <Text style={s.dayDotText}>{day.day}</Text>
         </View>
         {!isLast && <View style={s.dayLine} />}
       </View>
 
-      <View style={[s.dayContent, isRest && s.dayContentRest]}>
-        {/* Route */}
+      <View style={[s.dayContent, cardGlow]}>
+        {/* Top row: route + badge */}
         <View style={s.dayTopRow}>
           <View style={s.routeRow}>
             {isRest ? (
-              <View style={s.restIconWrap}>
-                <CheckCircle size={16} color={C.amber} strokeWidth={2.5} />
+              <View style={[s.restIconWrap, { backgroundColor: ac + '20' }]}>
+                <CheckCircle size={16} color={ac} strokeWidth={2.5} />
               </View>
             ) : (
-              <MapPin size={14} color={C.brand} strokeWidth={2.5} />
+              <MapPin size={14} color={ac} strokeWidth={2.5} />
             )}
-            <Text style={[s.dayTitle, isRest && s.dayTitleRest]} numberOfLines={2}>
-              {isRest ? `${day.from}` : `${day.from}  →  ${day.to}`}
+            <Text style={[s.dayTitle, isRest && { color: ac }]} numberOfLines={1}>
+              {isRest ? `${day.from}` : day.from === day.to ? `${day.from}` : `${day.from} → ${day.to}`}
             </Text>
           </View>
-          {isRest ? (
-            <View style={s.restBadge}>
-              <Text style={s.restBadgeText}>REST</Text>
-            </View>
-          ) : null}
+          <View style={[s.activityBadge, { backgroundColor: ac + '20', borderColor: ac }]}>
+            <Text style={[s.activityBadgeText, { color: ac }]}>{al}</Text>
+          </View>
         </View>
 
-        {isRest ? (
-          <>
-            <Text style={s.restDesc}>{day.checkpoint}</Text>
-            <View style={s.restIconRow}>
-              <Sunrise size={14} color={C.amber} strokeWidth={2} />
-              <Text style={s.restHint}>Acclimatization & recovery day</Text>
-            </View>
-          </>
-        ) : (
-          <>
-            <View style={s.statsGrid}>
-              <View style={s.statItem}>
-                <MapPin size={13} color={C.brand} strokeWidth={2.5} />
+        {/* Stats Grid (trekking & mixed days) */}
+        {stats.length > 0 && (
+          <View style={s.statsGrid}>
+            {stats.map((stat, i) => (
+              <View key={i} style={s.statItem}>
                 <View>
-                  <Text style={s.statItemValue}>{day.distance} km</Text>
-                  <Text style={s.statItemLabel}>Distance</Text>
+                  <Text style={s.statItemValue}>{stat.value}</Text>
+                  <Text style={s.statItemLabel}>{stat.label}</Text>
                 </View>
               </View>
-              <View style={s.statItem}>
-                <Mountain size={13} color={C.brand} strokeWidth={2.5} />
-                <View>
-                  <Text style={s.statItemValue}>+{day.elevationGain} m</Text>
-                  <Text style={s.statItemLabel}>Elevation</Text>
-                </View>
-              </View>
-              <View style={s.statItem}>
-                <Clock size={13} color={C.brand} strokeWidth={2.5} />
-                <View>
-                  <Text style={s.statItemValue}>{day.estimatedHours} hrs</Text>
-                  <Text style={s.statItemLabel}>Est. Time</Text>
-                </View>
-              </View>
-            </View>
+            ))}
+          </View>
+        )}
 
-            {day.elevationGain > 0 && (
-              <View style={s.elevBar}>
-                <View style={[s.elevFill, { width: Math.min((day.elevationGain / 1500) * 100, 100) + '%' }]} />
-              </View>
-            )}
+        {/* Checkpoint */}
+        {!isRest && day.checkpoint && !day.checkpoint.toLowerCase().includes('travel from') && (
+          <View style={s.checkpointRow}>
+            <MapPin size={12} color={ac} strokeWidth={2.5} />
+            <Text style={s.checkpointText}>{day.checkpoint}</Text>
+          </View>
+        )}
 
-            {day.checkpoint ? (
-              <View style={s.checkpointRow}>
-                <MapPin size={11} color={C.textFaint} strokeWidth={2} />
-                <Text style={s.checkpointText}>Via {day.checkpoint}</Text>
-              </View>
-            ) : null}
+        {/* Description line (only if no stats shown) */}
+        {stats.length === 0 && !isRest && (
+          <Text style={s.dayDescription}>{day.description}</Text>
+        )}
 
-            {day.restStops.length > 0 && (
-              <View style={s.restStops}>
-                <CheckCircle size={11} color={C.green} strokeWidth={2.5} />
-                <Text style={s.restStopsText}>
-                  Rest: {day.restStops.join(' → ')}
-                </Text>
-              </View>
-            )}
-          </>
+        {/* Overnight */}
+        {!isRest && !isTravel && (
+          <Text style={s.overnightLabel}>Overnight: {day.to}</Text>
+        )}
+
+        {/* Rest day hint */}
+        {isRest && (
+          <Text style={[s.restHint, { color: ac }]}>Recover & acclimatise · explore the area</Text>
+        )}
+
+        {/* Travel day hint */}
+        {isTravel && (
+          <Text style={[s.travelDesc, { color: ac }]}>{day.description}</Text>
         )}
       </View>
     </View>
@@ -463,7 +568,7 @@ function DayCard({ day, isLast }: { day: ItineraryDay; isLast: boolean }) {
 
 const ss = StyleSheet.create({
   selectorWrap: { marginBottom: 14 },
-  selectorLabel: { color: C.textSub, fontSize: 12, fontWeight: '600', marginBottom: 6, textTransform: 'uppercase' },
+  selectorLabel: { color: C.white, fontSize: 13, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 },
   selectorRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
   selectorOpt: {
     paddingHorizontal: 14,
@@ -586,7 +691,7 @@ const s = StyleSheet.create({
     borderColor: C.border,
   },
   statVal: { color: C.white, fontSize: 14, fontWeight: '700' },
-  statLbl: { color: C.textFaint, fontSize: 11 },
+  statLbl: { color: C.textMuted, fontSize: 11, fontWeight: '500', marginTop: 2 },
 
   /* Caution */
   cautionBox: {
@@ -602,14 +707,15 @@ const s = StyleSheet.create({
   },
   cautionText: {
     color: C.amber,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 19,
     flex: 1,
   },
 
   /* Route Info Card */
   routeInfoCard: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     marginHorizontal: 20,
     backgroundColor: C.surface,
     borderRadius: 14,
@@ -619,7 +725,6 @@ const s = StyleSheet.create({
     overflow: 'hidden',
   },
   routeInfoRow: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -627,18 +732,30 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
   },
   routeInfoDivider: {
-    width: 1,
+    height: 1,
     backgroundColor: C.border,
+    marginHorizontal: 12,
   },
   routeInfoLabel: {
-    color: C.textFaint,
+    color: C.textMuted,
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   routeInfoValue: {
     color: C.white,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
+    flex: 1,
+  },
+  preTrekHint: {
+    color: C.textMuted,
+    fontSize: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+    marginTop: -4,
+    fontStyle: 'italic',
   },
 
   /* Section Title */
@@ -740,6 +857,31 @@ const s = StyleSheet.create({
   dayTitleRest: {
     color: C.amber,
   },
+  activityBadge: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    marginLeft: 8,
+  },
+  activityBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  dayDescription: {
+    color: C.textSub,
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 8,
+    lineHeight: 20,
+  },
+  overnightLabel: {
+    color: C.textMuted,
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 8,
+  },
   restBadge: {
     backgroundColor: C.amber + '20',
     borderRadius: 8,
@@ -815,8 +957,9 @@ const s = StyleSheet.create({
     marginTop: 8,
   },
   checkpointText: {
-    color: C.textFaint,
-    fontSize: 11,
+    color: C.textMuted,
+    fontSize: 12,
+    fontWeight: '500',
   },
   restStops: {
     flexDirection: 'row',
@@ -826,15 +969,17 @@ const s = StyleSheet.create({
   },
   restStopsText: {
     color: C.green,
-    fontSize: 11,
+    fontSize: 12,
+    fontWeight: '600',
     flex: 1,
   },
   restDesc: {
     color: C.textMuted,
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '500',
     marginTop: 6,
     fontStyle: 'italic',
-    lineHeight: 18,
+    lineHeight: 20,
   },
   restIconRow: {
     flexDirection: 'row',
@@ -844,7 +989,76 @@ const s = StyleSheet.create({
   },
   restHint: {
     color: C.amber,
-    fontSize: 11,
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 4,
+  },
+
+  /* Form Screen */
+  formIntro: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  formIntroTitle: {
+    color: C.white,
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  formIntroSub: {
+    color: C.textMuted,
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  formBody: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+  },
+  formError: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(239,68,68,0.10)',
+    borderWidth: 1,
+    borderColor: C.red + '30',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  formErrorText: {
+    color: C.red,
+    fontSize: 13,
+    fontWeight: '500',
+    flex: 1,
+  },
+  generateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: C.brand,
+    paddingVertical: 16,
+    borderRadius: 16,
+    marginTop: 8,
+    shadowColor: C.brand,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  generateBtnDisabled: {
+    opacity: 0.6,
+  },
+  generateBtnText: {
+    color: C.white,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  loadingText: {
+    color: C.textFaint,
+    fontSize: 14,
+    marginTop: 16,
   },
 
   /* Modal */

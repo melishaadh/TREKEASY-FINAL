@@ -152,10 +152,10 @@ const s = StyleSheet.create({
   },
   title: { color: C.white, fontSize: 19, fontWeight: '700' },
   sectionLabel: {
-    color: C.textFaint,
-    fontSize: 11,
+    color: C.white,
+    fontSize: 12,
     fontWeight: '700',
-    letterSpacing: 1.5,
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
     marginBottom: 12,
   },

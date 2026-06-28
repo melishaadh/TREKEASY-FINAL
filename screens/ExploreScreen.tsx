@@ -280,9 +280,9 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  resultCount: { color: C.textFaint, fontSize: 12 },
+  resultCount: { color: C.textMuted, fontSize: 13, fontWeight: '600' },
   empty: { alignItems: 'center', paddingVertical: 48 },
-  emptyText: { color: C.textFaint, fontSize: 15, marginBottom: 16 },
+  emptyText: { color: C.textMuted, fontSize: 15, fontWeight: '500', marginBottom: 16 },
   clearBtn: {
     backgroundColor: C.brand,
     paddingHorizontal: 24,

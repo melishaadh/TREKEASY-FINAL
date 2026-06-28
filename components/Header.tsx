@@ -42,9 +42,9 @@ const s = StyleSheet.create({
   },
   title: {
     color: C.white,
-    fontSize: 20,
-    fontWeight: '700',
-    letterSpacing: 1,
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: 1.2,
   },
   menuBtn: {
     width: 36,

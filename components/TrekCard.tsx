@@ -118,7 +118,7 @@ const s = StyleSheet.create({
   diffBadgeText: { color: C.white, fontSize: 11, fontWeight: '700' },
   cardBody: { padding: 14 },
   cardName: { color: C.white, fontSize: 15, fontWeight: '600' },
-  cardParent: { color: C.textFaint, fontSize: 12, marginTop: 2 },
+  cardParent: { color: C.textMuted, fontSize: 12, fontWeight: '500', marginTop: 3 },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -126,7 +126,7 @@ const s = StyleSheet.create({
     marginTop: 12,
   },
   cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  cardMetaText: { color: C.textSub, fontSize: 12 },
+  cardMetaText: { color: C.textMuted, fontSize: 12, fontWeight: '600' },
   cardPrice: { color: C.brand, fontSize: 13, fontWeight: '700' },
 
   /* Compact card */
@@ -149,6 +149,6 @@ const s = StyleSheet.create({
     marginTop: 8,
   },
   likeBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  compactLikes: { color: C.textFaint, fontSize: 12 },
+  compactLikes: { color: C.textMuted, fontSize: 12, fontWeight: '600' },
   compactPrice: { color: C.brand, fontSize: 13, fontWeight: '700' },
 });

@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { ArrowLeft, Heart, Mountain, Clock, Users, TrendingUp, Map } from 'lucide-react-native';
+import { ArrowLeft, Heart, Mountain, Clock, Users, TrendingUp, Map, CheckCircle } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import LoginPromptModal from '@/components/LoginPromptModal';
 import { DESTINATIONS } from '@/data/destinations';
@@ -32,6 +32,7 @@ function mapDetailTrek(t: Trek) {
     maxAltitude: t.maxAltitude,
     priceNPR: t.price,
     description: t.description,
+    keywords: t.keywords || [],
     image: t.imageUrl ?? '',
     likes: 0,
     itinerary: t.routeStages.map(s => ({
@@ -111,7 +112,7 @@ export default function TrekDetailScreen() {
   };
 
   const handleViewItinerary = () => {
-    router.push(`/trek/${id}/itinerary`);
+    router.push(`/trek/${id}/itinerary?duration=${trek.durationDays}`);
   };
 
   return (
@@ -169,22 +170,58 @@ export default function TrekDetailScreen() {
           <Text style={s.heading}>About This Trek</Text>
           <Text style={s.description}>{trek.description}</Text>
 
-          {/* Itinerary */}
-          <Text style={s.heading}>Itinerary — {trek.durationDays} Days</Text>
-          {trek.itinerary.map((day: any, i: number) => (
-            <View key={day.day} style={s.itRow}>
-              <View style={s.itLeft}>
-                <View style={s.itDot}>
-                  <Text style={s.itDotText}>{day.day}</Text>
-                </View>
-                {i < trek.itinerary.length - 1 && <View style={s.itLine} />}
+          {/* Highlights */}
+          {trek.keywords && trek.keywords.length > 0 && (
+            <>
+              <Text style={s.heading}>Highlights</Text>
+              <View style={s.highlightsRow}>
+                {[...new Set(trek.keywords)].slice(0, 8).map((kw: string) => (
+                  <View key={kw} style={s.highlightBadge}>
+                    <CheckCircle size={12} color={C.green} strokeWidth={2.5} />
+                    <Text style={s.highlightText}>{kw}</Text>
+                  </View>
+                ))}
               </View>
-              <View style={s.itCard}>
-                <Text style={s.itTitle}>{day.title}</Text>
-                <Text style={s.itDesc}>{day.description}</Text>
-              </View>
+            </>
+          )}
+
+          {/* Photo Gallery */}
+          <Text style={s.heading}>Gallery</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.galleryScroll}>
+            {[trekImage, trekImage, trekImage].map((src, i) => (
+              <Image
+                key={i}
+                source={src}
+                style={s.galleryImage}
+                resizeMode="cover"
+              />
+            ))}
+          </ScrollView>
+
+          {/* Details Grid */}
+          <Text style={s.heading}>Quick Facts</Text>
+          <View style={s.detailsGrid}>
+            <View style={s.detailCard}>
+              <Mountain size={16} color={C.brand} strokeWidth={2} />
+              <Text style={s.detailVal}>{trek.maxAltitude.toLocaleString()} m</Text>
+              <Text style={s.detailLbl}>Max Altitude</Text>
             </View>
-          ))}
+            <View style={s.detailCard}>
+              <Clock size={16} color={C.brand} strokeWidth={2} />
+              <Text style={s.detailVal}>{trek.durationDays} days</Text>
+              <Text style={s.detailLbl}>Duration</Text>
+            </View>
+            <View style={s.detailCard}>
+              <TrendingUp size={16} color={C.brand} strokeWidth={2} />
+              <Text style={s.detailVal}>{trek.difficulty}</Text>
+              <Text style={s.detailLbl}>Difficulty</Text>
+            </View>
+            <View style={s.detailCard}>
+              <Map size={16} color={C.brand} strokeWidth={2} />
+              <Text style={s.detailVal}>{trek.parentName}</Text>
+              <Text style={s.detailLbl}>Region</Text>
+            </View>
+          </View>
 
           <View style={{ height: 130 }} />
         </View>
@@ -288,7 +325,7 @@ const s = StyleSheet.create({
   /* Body */
   body: { paddingHorizontal: 20, paddingTop: 20 },
   trekTitle: { color: C.white, fontSize: 26, fontWeight: '700', lineHeight: 32 },
-  trekParent: { color: C.textFaint, fontSize: 13, marginTop: 4, marginBottom: 16 },
+  trekParent: { color: C.textMuted, fontSize: 14, fontWeight: '500', marginTop: 4, marginBottom: 20 },
 
   statsRow: {
     flexDirection: 'row',
@@ -311,7 +348,7 @@ const s = StyleSheet.create({
     borderColor: C.border,
   },
   statVal: { color: C.white, fontSize: 14, fontWeight: '700' },
-  statLbl: { color: C.textFaint, fontSize: 11 },
+  statLbl: { color: C.textMuted, fontSize: 11, fontWeight: '500', marginTop: 2 },
 
   heading: {
     color: C.white,
@@ -322,41 +359,59 @@ const s = StyleSheet.create({
   },
   description: {
     color: C.textSub,
-    fontSize: 14,
-    lineHeight: 22,
-    marginBottom: 16,
+    fontSize: 15,
+    fontWeight: '400',
+    lineHeight: 24,
+    marginBottom: 20,
   },
 
-  /* Itinerary */
-  itRow: { flexDirection: 'row', marginBottom: 8 },
-  itLeft: { width: 36, alignItems: 'center', marginRight: 12 },
-  itDot: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: C.brand,
+  /* Highlights */
+  highlightsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 20,
+  },
+  highlightBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 5,
+    backgroundColor: C.surface,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
-  itDotText: { color: C.white, fontSize: 12, fontWeight: '700' },
-  itLine: {
-    width: 2,
-    flex: 1,
-    backgroundColor: C.border,
-    marginTop: 4,
-    minHeight: 12,
+  highlightText: { color: C.textSub, fontSize: 13, fontWeight: '600', textTransform: 'capitalize' },
+
+  /* Gallery */
+  galleryScroll: { marginBottom: 20 },
+  galleryImage: {
+    width: 260,
+    height: 180,
+    borderRadius: 14,
+    marginRight: 10,
   },
-  itCard: {
-    flex: 1,
+
+  /* Details Grid */
+  detailsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 20,
+  },
+  detailCard: {
+    width: (width - 50) / 2,
     backgroundColor: C.surface,
     borderWidth: 1,
     borderColor: C.border,
     borderRadius: 14,
-    padding: 12,
-    marginBottom: 8,
+    padding: 14,
+    gap: 6,
   },
-  itTitle: { color: C.white, fontSize: 14, fontWeight: '600' },
-  itDesc: { color: C.textFaint, fontSize: 12, marginTop: 4, lineHeight: 18 },
+  detailVal: { color: C.white, fontSize: 14, fontWeight: '700' },
+  detailLbl: { color: C.textMuted, fontSize: 11, fontWeight: '500', marginTop: 2 },
 
   /* Glassmorphic Footer */
   footerWrap: {

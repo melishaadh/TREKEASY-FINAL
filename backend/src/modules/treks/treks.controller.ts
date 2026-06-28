@@ -61,12 +61,12 @@ export class TreksController {
     @Query('fitnessLevel') fitnessLevel?: string,
     @Query('trekkingExperience') trekkingExperience?: string,
     @Query('targetDays') targetDays?: string,
-    @Query('healthCondition') healthCondition?: string,
     @Query('age') age?: string,
     @Query('weight') weight?: string,
     @Query('groupSize') groupSize?: string,
     @Query('previousTreks') previousTreks?: string,
     @Query('startLocation') startLocation?: string,
+    @Query('finalDestination') finalDestination?: string,
   ) {
     const trek = await this.treksService.getById(id);
     const input: PersonalizationInput = {
@@ -74,12 +74,12 @@ export class TreksController {
       fitnessLevel: (fitnessLevel as PersonalizationInput['fitnessLevel']) || 'beginner',
       trekkingExperience: (trekkingExperience as PersonalizationInput['trekkingExperience']) || 'none',
       targetDays: targetDays ? parseInt(targetDays, 10) : undefined,
-      healthCondition: (healthCondition as PersonalizationInput['healthCondition']) || 'none',
       age: age ? parseInt(age, 10) : undefined,
       weight: weight ? parseInt(weight, 10) : undefined,
       groupSize: groupSize ? parseInt(groupSize, 10) : undefined,
       previousTreks: previousTreks ? parseInt(previousTreks, 10) : undefined,
       startLocation,
+      finalDestination,
     };
     return this.personalizationService.generate(
       trek.name,

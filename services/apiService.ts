@@ -645,6 +645,8 @@ export interface ItineraryDay {
   estimatedHours: number;
   checkpoint: string;
   restStops: string[];
+  activityType: 'trekking' | 'travel' | 'rest' | 'mixed';
+  description: string;
 }
 
 export interface PersonalizedItinerary {
@@ -653,6 +655,12 @@ export interface PersonalizedItinerary {
   totalDistance: number;
   suitability: 'Low' | 'Moderate' | 'High';
   cautionMessage: string;
+  suggestedStart: string;
+  origin: string;
+  finalDestination: string;
+  trekEnd: string;
+  preTrekSummary?: string;
+  postTrekSummary?: string;
   itinerary: ItineraryDay[];
 }
 
@@ -664,12 +672,12 @@ export const itineraryApi = {
       fitnessLevel?: string;
       trekkingExperience?: string;
       targetDays?: number;
-      healthCondition?: string;
       age?: number;
       weight?: number;
       groupSize?: number;
       previousTreks?: number;
       startLocation?: string;
+      finalDestination?: string;
     },
   ): Promise<PersonalizedItinerary | null> => {
     try {
@@ -678,12 +686,12 @@ export const itineraryApi = {
       if (params?.fitnessLevel) query.set('fitnessLevel', params.fitnessLevel);
       if (params?.trekkingExperience) query.set('trekkingExperience', params.trekkingExperience);
       if (params?.targetDays) query.set('targetDays', String(params.targetDays));
-      if (params?.healthCondition) query.set('healthCondition', params.healthCondition);
       if (params?.age) query.set('age', String(params.age));
       if (params?.weight) query.set('weight', String(params.weight));
       if (params?.groupSize) query.set('groupSize', String(params.groupSize));
       if (params?.previousTreks) query.set('previousTreks', String(params.previousTreks));
       if (params?.startLocation) query.set('startLocation', params.startLocation);
+      if (params?.finalDestination) query.set('finalDestination', params.finalDestination);
       const qs = query.toString();
       const url = `${API_URL}/treks/${trekId}/itinerary${qs ? `?${qs}` : ''}`;
       const res = await fetch(url);
